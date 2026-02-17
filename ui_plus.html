@@ -61,6 +61,28 @@
     </div>
   </div>
 
+ codex/cleanup-user-facing-content-and-standardize-ctas
+      <h2>Rent Bots (Marketplace)</h2>
+      <p class="muted">Instant capacity upgrade. Runs locally, paid securely.</p>
+      <div class="row">
+        <a href="https://buy.stripe.com/dRm3cxaligqC6Kf99tdAk04" target="_blank" rel="noopener"><button>Rent Bots — Pay with Stripe</button></a>
+      </div>
+      <p class="muted">Create a renter + API key, then place spot/reserved and allocate credits.</p>
+      <div class="row">
+        <input id="renter" placeholder="renter" value="alice"/>
+        <input id="apikey" placeholder="api_key"/>
+      </div>
+      <div class="row">
+        <button onclick="api('/api/renter_create',{renter:val('renter')})">Create renter</button>
+        <button onclick="api('/api/renter_status',{renter:val('renter'),api_key:val('apikey')})">Renter status</button>
+      </div>
+      <div class="row">
+        <select id="tier">
+          <option>Bronze</option><option>Silver</option><option selected>Gold</option><option>Platinum</option>
+        </select>
+        <input id="bid" placeholder="spot bid_bps" value="7000"/>
+        <input id="maxc" placeholder="max_credits" value="3000"/>
+
   <div class="card" style="margin-top:14px;">
     <h2>Output</h2>
     <div id="out" class="out">—</div>
@@ -104,3 +126,4 @@ async function finalBroadcast(){
 </script>
 </body>
 </html>
+ main
