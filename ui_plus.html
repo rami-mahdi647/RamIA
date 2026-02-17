@@ -8,69 +8,41 @@
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#0b0f14;color:#e8eef6}
     header{position:sticky;top:0;background:#0b0f14;border-bottom:1px solid #1b2633}
     .wrap{max-width:1150px;margin:0 auto;padding:18px 20px}
-    h1{margin:0;font-size:18px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     .card{background:#0f1620;border:1px solid #1b2633;border-radius:14px;padding:14px}
-    h2{margin:0 0 8px 0;font-size:15px}
-    p{margin:8px 0;color:#cdd9e5;line-height:1.45}
-    .muted{color:#9fb1c1;font-size:12px}
     input,select,button{background:#0b0f14;border:1px solid #1b2633;color:#e8eef6;border-radius:10px;padding:10px;font-size:13px}
-    button{cursor:pointer}
-    button:hover{border-color:#2b3b52}
     .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-    .out{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas;font-size:12px}
+    .muted{color:#9fb1c1;font-size:12px}
+    .out{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas;font-size:12px}
     .tag{display:inline-block;padding:3px 8px;border:1px solid #1b2633;border-radius:999px;font-size:12px;color:#9fb1c1}
-    code{background:#0b0f14;border:1px solid #1b2633;border-radius:10px;padding:2px 6px}
-    .steps{background:#0b0f14;border:1px solid #1b2633;border-radius:12px;padding:10px}
+    .guardian{border:1px solid #24405f;padding:10px;border-radius:10px;background:#0b1220}
   </style>
 </head>
 <body>
 <header>
   <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-    <h1>AIChain Core+ — Local Node (Wallet • Mine • Send • Rent Bots)</h1>
+    <h1>AIChain Core+ — Local Node (Guided Send)</h1>
     <span class="tag">localhost</span>
   </div>
 </header>
 
 <div class="wrap">
-  <div class="card">
-    <h2>How to use (quick)</h2>
-    <div class="steps">
-      <p class="muted">
-        1) <b>Create Wallet</b> → you get your address (stored locally in <code>wallet.json</code>)<br/>
-        2) (Creator) <b>Enable Founder Mode</b> → you get “10,000 fixed bots” conceptually via permanent reserved priority<br/>
-        3) <b>Send TX</b> → goes to mempool (AI committee decides)<br/>
-        4) <b>Mine</b> → produces a block and pays rewards + fees<br/>
-        5) <b>Rent Bots</b> → create renter + spot/reserved + credits, earn from renters pool
-      </p>
-    </div>
-  </div>
-
-  <div class="grid" style="margin-top:14px;">
+  <div class="grid">
     <div class="card">
-      <h2>Wallet</h2>
-      <p class="muted">Your wallet is a local file. Keep it backed up. Private key stays on your device.</p>
+      <h2>Guided Flow</h2>
+      <p class="muted">Step 4 performs a Guardian pre-check before final broadcast.</p>
       <div class="row">
         <button onclick="api('/api/wallet_create',{label:'default'})">Create Wallet</button>
         <button onclick="api('/api/wallet_info',{})">Wallet Info</button>
-        <button onclick="api('/api/founder_enable',{})">Enable Founder Mode (10k bots)</button>
       </div>
       <div class="row">
         <button onclick="api('/api/status',{})">Node Status</button>
-        <button onclick="api('/api/audit_verify',{})">Audit Verify</button>
-      </div>
-
-      <h2>Mining</h2>
-      <p class="muted">Mining commits mempool transactions into a new block.</p>
-      <div class="row">
         <button onclick="api('/api/mine',{any_miner_addr:'x'})">Mine 1 block</button>
-        <button onclick="mineN(5)">Mine 5 blocks</button>
       </div>
     </div>
 
     <div class="card">
-      <h2>Send Transaction</h2>
-      <p class="muted">Tip: use your wallet address as <b>from</b>. If rejected, you may get a private receipt.</p>
+      <h2>Guided Step 4 — Send Form</h2>
       <div class="row">
         <input id="from" placeholder="from address"/>
         <input id="to" placeholder="to address"/>
@@ -78,13 +50,18 @@
       <div class="row">
         <input id="amt" placeholder="amount" value="100000"/>
         <input id="fee" placeholder="fee" value="1000"/>
+        <input id="outputs" placeholder="outputs" value="1"/>
       </div>
       <div class="row">
-        <input id="memo" placeholder="memo (optional)" value="hello"/>
-        <button onclick="sendTx()">Send</button>
-        <button onclick="fillFromWallet()">Use my wallet as from</button>
+        <input id="memo" placeholder="memo" value="hello"/>
+        <button onclick="runGuardianExplain()">Step 4: Explain Risk</button>
+        <button id="broadcastBtn" onclick="finalBroadcast()" disabled>Final Broadcast</button>
       </div>
+      <div id="guardianBox" class="guardian muted">Run Step 4 to get a risk explanation before broadcasting.</div>
+    </div>
+  </div>
 
+ codex/cleanup-user-facing-content-and-standardize-ctas
       <h2>Rent Bots (Marketplace)</h2>
       <p class="muted">Instant capacity upgrade. Runs locally, paid securely.</p>
       <div class="row">
@@ -105,3 +82,48 @@
         </select>
         <input id="bid" placeholder="spot bid_bps" value="7000"/>
         <input id="maxc" placeholder="max_credits" value="3000"/>
+
+  <div class="card" style="margin-top:14px;">
+    <h2>Output</h2>
+    <div id="out" class="out">—</div>
+  </div>
+</div>
+
+<script>
+let pendingTx = null;
+function val(id){ return document.getElementById(id).value; }
+async function api(path, body){
+  const res = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const txt = await res.text();
+  try { return JSON.parse(txt); } catch(e) { return {ok:false, raw:txt}; }
+}
+function txBody(){
+  return {
+    from_addr: val('from'),
+    to_addr: val('to'),
+    amount: parseInt(val('amt')),
+    fee: parseInt(val('fee')),
+    outputs: parseInt(val('outputs')),
+    memo: val('memo')
+  };
+}
+async function runGuardianExplain(){
+  pendingTx = txBody();
+  const out = await api('/api/guardian_explain', pendingTx);
+  document.getElementById('out').textContent = JSON.stringify(out, null, 2);
+  if(out.ok){
+    document.getElementById('broadcastBtn').disabled = false;
+    const reasons = (out.reasons || []).map(r => '• ' + r).join('\n');
+    const suggestions = (out.suggestions || []).map(s => '• ' + s).join('\n');
+    document.getElementById('guardianBox').textContent = `Risk: ${out.risk_score} | Fee multiplier: ${out.fee_multiplier}\nReasons:\n${reasons}\nSuggestions:\n${suggestions}`;
+  }
+}
+async function finalBroadcast(){
+  if(!pendingTx){ return; }
+  const out = await api('/api/send', pendingTx);
+  document.getElementById('out').textContent = JSON.stringify(out, null, 2);
+}
+</script>
+</body>
+</html>
+ main
