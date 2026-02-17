@@ -1,98 +1,231 @@
-# RamIA — Tokenomics v1 + Stripe Bot Renting
+# RamIA (Technical README)
 
-RamIA runs locally (Termux/PC/Mac/Windows) while Netlify serves only static PWA assets + serverless Stripe endpoints.
+Repositorio técnico de **RamIA** para ejecutar nodo local, motor de tokenomics y pruebas de integración de pagos (Stripe + funciones serverless).
 
-## What is included
+> Este README está orientado a personas técnicas que trabajan desde terminal (CLI), no al flujo básico de la web pública.
 
-- `docs/TOKENOMICS_V1.md`: canonical tokenomics spec for fixed supply `100,000,000 RAMIA`.
-- `tokenomics_v1.py`: deterministic tokenomics math module + `--self-test`.
-- `ramia_core_v1.py`: chain entrypoint that wraps `aichain` and applies emission adapter with `token_state.json`.
-- `netlify/functions/create_checkout_session.js`: Stripe hosted Checkout session creation (`$1,000` fixed per bot).
-- `netlify/functions/stripe_webhook.js`: webhook verification + signed grant token creation.
-- `stripe_bridge.py`: local grant token verification and market credit apply helpers.
-- `ramia_core_plus.py`: local node entrypoint exposing `POST /api/redeem_grant`.
-- `site/`: static PWA with a dedicated `Rent Bots` page.
-- `.github/workflows/release.yml`: tagged release builds via PyInstaller (Linux/Windows/macOS).
-- `.github/workflows/check-site.yml`: CI check that fails if `site/index.html` is missing.
+## 1) Arquitectura del repositorio
 
-## Operational boundaries (quick guide)
+- **Núcleo local (Python)**
+  - `aichain.py`, `aicore_plus.py`, `ramia_core.py`, `ramia_core_plus.py`, `ramia_core_v1.py`
+  - Ejecutan nodo local, estado, web local y endpoint de canje de grants.
+- **Tokenomics (Python)**
+  - `tokenomics_v1.py`
+  - Incluye validación determinista con `--self-test`.
+- **Puente Stripe (Python)**
+  - `stripe_bridge.py`
+  - Verificación/canje local de tokens de grant.
+- **Funciones serverless (Node.js)**
+  - `netlify/functions/*.js`
+  - Checkout + webhook + obtención de grant token.
+- **Frontend estático (PWA)**
+  - `site/*`
+  - UI estática desplegable en Netlify u otro hosting estático.
 
-- **Static frontend PWA (`site/`)**: installable app shell, offline cache (`sw.js`), manifest metadata, and browser UI (`index.html`, `rent-bots.html`, `success.html`).
-- **Paid backend functions (`netlify/functions/`)**: Stripe Checkout creation, webhook validation, and secure token/grant delivery from Netlify serverless endpoints.
-- **Local blockchain core (`aichain*`, `ramia_core*`, `aicore*`)**: local Python node execution, mining/state updates, and chain datadir persistence.
+---
 
-### Common symptom triage
+## 2) Requisitos
 
-| Symptom | First checks |
-| --- | --- |
-| `PWA does not install` | Inspect `site/sw.js` registration/caching behavior and verify manifest fields/icons in `site/manifest.webmanifest` (or the active manifest referenced by `site/index.html`). |
-| `Checkout fails` | Validate Netlify function logs and environment variables (`STRIPE_SECRET_KEY`, `SITE_URL`, etc.) plus Stripe account/webhook setup. |
-| `Chain/node failure` | Review local Python scripts (`ramia_core*`, `aichain*`, `aicore*`) and confirm `--datadir` path, permissions, and current chain state files. |
+### Requisitos generales
 
-## Local test commands
+- `git`
+- `python3` (recomendado 3.10+)
+- `node` + `npm` (recomendado Node 18+)
 
-### 1) Node run
+### Verificación rápida
+
+```bash
+git --version
+python3 --version
+node --version
+npm --version
+```
+
+---
+
+## 3) Clonar e instalar dependencias
+
+```bash
+git clone <URL_DEL_REPO>
+cd RamIA
+npm install
+```
+
+> `npm install` instala dependencias usadas por funciones serverless (`stripe`, `@netlify/blobs`).
+
+---
+
+## 4) Ejecución por sistema operativo
+
+## Linux (genérico)
+
+### Instalar runtime (Debian/Ubuntu)
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv python3-pip nodejs npm
+```
+
+### Ejecutar nodo local
 
 ```bash
 python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web
 ```
 
-### 2) Tokenomics self-test
+### Ejecutar self-test de tokenomics
 
 ```bash
 python3 tokenomics_v1.py --self-test
 ```
 
-### 3) Tokenomics mining adapter sanity
+---
+
+## Ubuntu (paso a paso recomendado)
+
+### 1. Dependencias
 
 ```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git curl python3 python3-venv python3-pip nodejs npm
+```
+
+### 2. Clonar e instalar
+
+```bash
+git clone <URL_DEL_REPO>
+cd RamIA
+npm install
+```
+
+### 3. Arrancar nodo local
+
+```bash
+python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web --web-host 127.0.0.1 --web-port 8787
+```
+
+### 4. Validar estado (tokenomics + minería v1)
+
+```bash
+python3 tokenomics_v1.py --self-test
 python3 ramia_core_v1.py --datadir ./aichain_data_v1 mine miner_demo
 python3 ramia_core_v1.py --datadir ./aichain_data_v1 status
 ```
 
-### 4) Netlify functions local test (mocked request)
+---
+
+## macOS
+
+### Instalar herramientas base (Homebrew)
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install python node git
+```
+
+### Ejecutar proyecto
+
+```bash
+git clone <URL_DEL_REPO>
+cd RamIA
+npm install
+python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web
+```
+
+### Tests rápidos
+
+```bash
+python3 tokenomics_v1.py --self-test
+```
+
+---
+
+## Windows (PowerShell)
+
+### Opción A (nativa)
+
+1. Instala:
+   - Git for Windows
+   - Python 3 (marcar "Add python.exe to PATH")
+   - Node.js LTS
+
+2. En PowerShell:
+
+```powershell
+git clone <URL_DEL_REPO>
+cd RamIA
+npm install
+py -3 ramia_core_plus.py --guardian-model .\guardian_model.json --web
+```
+
+3. Self-test:
+
+```powershell
+py -3 tokenomics_v1.py --self-test
+```
+
+### Opción B (recomendada para entorno Linux en Windows): WSL2 + Ubuntu
+
+Usa la sección de **Ubuntu** de este README.
+
+---
+
+## 5) Ejecución de funciones serverless (modo local rápido)
+
+Prueba de contrato básico de la función `create_checkout_session` sin levantar Netlify completo:
 
 ```bash
 node -e "const fn=require('./netlify/functions/create_checkout_session'); fn.handler({httpMethod:'POST',body:JSON.stringify({renter:'demo',bots_count:2})}).then(x=>console.log(x.statusCode));"
 ```
 
-> The command above is deterministic for input validation. A live Stripe session requires valid env vars and network.
+> Para crear sesiones reales en Stripe, define variables de entorno válidas y salida a Internet.
 
 ---
 
-## Final Checklist
+## 6) Variables de entorno (Stripe / serverless)
 
-### Netlify environment variables
-
-Set in Netlify UI (Site settings → Environment variables):
+Variables usadas por funciones:
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `SITE_URL`
-- Optional: `STRIPE_GRANT_SECRET` (recommended; if omitted webhook secret is reused)
-- Optional: `BOT_RENT_PRICE_USD` (defaults to `1000`)
-- Optional: `GRANT_FETCH_TTL_SECONDS` (defaults to `600`; short-lived retrieval window)
+- `STRIPE_GRANT_SECRET` (opcional, recomendado)
+- `BOT_RENT_PRICE_USD` (opcional; default `1000`)
+- `GRANT_FETCH_TTL_SECONDS` (opcional; default `600`)
 
-### Stripe webhook endpoint
+Ejemplo Linux/macOS:
 
-Configure in Stripe Dashboard:
+```bash
+export STRIPE_SECRET_KEY='sk_live_or_test_xxx'
+export STRIPE_WEBHOOK_SECRET='whsec_xxx'
+export SITE_URL='https://tu-dominio-o-netlify.app'
+```
 
-- Endpoint URL: `https://<your-site>.netlify.app/.netlify/functions/stripe_webhook`
-- Event: `checkout.session.completed`
-- Copy signing secret into `STRIPE_WEBHOOK_SECRET`
+Ejemplo PowerShell:
 
-### Local node redeem flow
+```powershell
+$env:STRIPE_SECRET_KEY='sk_live_or_test_xxx'
+$env:STRIPE_WEBHOOK_SECRET='whsec_xxx'
+$env:SITE_URL='https://tu-dominio-o-netlify.app'
+```
 
-1. Complete checkout on hosted Stripe page.
-odex/consolidate-api-contract-across-documentation
-2. Open `success.html?session_id=...`.
-3. Fetch grant token from `/.netlify/functions/get_grant_token`.
-4. Redeem on the local node using the official contract:
+---
 
-2. Open `success.html?session_id=...&grant_key=...` (the full redirect URL from Stripe).
-3. Fetch grant token from `/.netlify/functions/get_grant_token` using both `session_id` and `grant_key` (delivered in the Stripe success URL).
-4. Call local endpoint:
- main
+## 7) API local de canje de grant
+
+Endpoint expuesto por `ramia_core_plus.py`:
+
+- `POST /api/redeem_grant`
+
+Payload:
+
+```json
+{
+  "renter": "demo",
+  "token": "<grant_token>"
+}
+```
+
+Ejemplo:
 
 ```bash
 curl -X POST http://127.0.0.1:8787/api/redeem_grant \
@@ -100,38 +233,38 @@ curl -X POST http://127.0.0.1:8787/api/redeem_grant \
   -d '{"renter":"demo","token":"<grant_token_here>"}'
 ```
 
-### API contract
+---
 
-**Endpoint**: `POST /api/redeem_grant`
+## 8) Flujo de trabajo técnico recomendado
 
-**Request JSON**
+1. Ejecutar pruebas deterministas de tokenomics.
+2. Validar nodo local (`ramia_core_plus.py`).
+3. Probar endpoint local `/api/redeem_grant` con token de prueba.
+4. Probar funciones serverless en local (contrato) o en entorno Netlify.
+5. Integrar webhook Stripe en entorno de staging antes de producción.
 
-```json
-{
-  "renter": "string (required)",
-  "token": "string (required, signed grant token)"
-}
+---
+
+## 9) Troubleshooting
+
+- **`python3: command not found`**
+  - Instalar Python y/o ajustar PATH.
+- **`Module not found` en Node**
+  - Ejecutar `npm install` en la raíz del repo.
+- **Error de Stripe en checkout**
+  - Revisar `STRIPE_SECRET_KEY`, `SITE_URL` y conectividad de red.
+- **No responde `POST /api/redeem_grant`**
+  - Confirmar que `ramia_core_plus.py` esté corriendo con `--web` y puerto correcto.
+
+---
+
+## 10) Comandos de verificación mínima (copy/paste)
+
+```bash
+python3 tokenomics_v1.py --self-test
+python3 ramia_core_v1.py --datadir ./aichain_data_v1 mine miner_demo
+python3 ramia_core_v1.py --datadir ./aichain_data_v1 status
+python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web --web-port 8787
 ```
 
-**Response JSON**
-
-```json
-{
-  "ok": true,
-  "renter": "demo",
-  "credited": 2000,
-  "credits_total": 5000
-}
-```
-
-Error responses follow the shape `{"ok": false, "error": "<code>"}` (for example: `missing_renter_or_token`, `renter_mismatch`, `expired_token`).
-
-### Security notes
-
-- Raw card data is never handled by RamIA; checkout is Stripe-hosted only.
-- All secrets come from environment variables; do not hardcode keys.
-- Webhook signatures are verified before grant issuance.
-- Grant tokens are HMAC-signed and expire (`expires_ts`).
-- Grant retrieval now requires a second factor (`grant_key`) plus `session_id`.
-- Retrieval endpoint returns only `grant_token` and can invalidate the grant after first successful read (default behavior).
-- Local redemption validates token integrity and renter match before crediting.
+Si necesitas un README adicional orientado a contribución (estilo `CONTRIBUTING.md`) con estándares de commits, release y CI, créalo separado de este README técnico.
