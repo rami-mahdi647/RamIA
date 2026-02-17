@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>RamIA — Download & Run Locally</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0b0f14"/>
+</head>
+<body style="font-family:system-ui;background:#0b0f14;color:#e8eef6;margin:0;padding:20px">
+  <h1>RamIA</h1>
+  <p>This website is a static launcher + documentation. The node runs locally (Termux/PC).</p>
+
+  <h2>Download</h2>
+  <ul>
+    <li><a href="https://github.com/rami-mahdi647/RamIA" style="color:#8ab4ff">GitHub Repository</a></li>
+    <!-- Cuando tengas releases, cambia esto a tu release asset -->
+    <li><a href="https://github.com/rami-mahdi647/RamIA/archive/refs/heads/main.zip" style="color:#8ab4ff">Download ZIP</a></li>
+  </ul>
+
+  <h2>Run in Termux (quick)</h2>
+  <pre style="background:#111a24;padding:12px;border-radius:12px;overflow:auto">
+pkg update -y && pkg upgrade -y
+pkg install -y python git
+git clone https://github.com/rami-mahdi647/RamIA.git
+cd RamIA
+# train guardian (demo)
+python3 aiguardian.py train --csv dataset.csv --out guardian_model.json
+# run node locally
+python3 aicore.py --guardian-model guardian_model.json node --web
+# open: http://127.0.0.1:8787
+  </pre>
+
+  <hr style="border-color:#1b2633;margin:20px 0">
+
+  <button id="updateBtn" style="display:none;padding:10px 14px;border-radius:10px;border:1px solid #1b2633;background:#0b0f14;color:#e8eef6">
+    Update available — Reload
+  </button>
+
+  <script src="/app.js"></script>
+</body>
+</html>
