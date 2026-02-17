@@ -1,0 +1,23 @@
+# RamIA Core config (example)
+datadir=./aichain_data
+guardian_model=./guardian_model.json
+threshold=0.70
+privacy_mode=receipt_only
+
+fleet_size=2000
+committee_size=11
+fleet_seed=1337
+
+web=1
+web_host=127.0.0.1
+web_port=8787
+
+wallet_file=./wallet.json
+ui_file=./coreui/ui_plus.html
+
+# files
+fleet_state=./fleet_state.json
+burst_state=./burst_state.json
+market_state=./market_secure_state.bin
+secret_file=./market_secret.key
+audit_log=./audit_log.jsonl
