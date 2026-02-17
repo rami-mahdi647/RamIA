@@ -85,13 +85,39 @@ Configure in Stripe Dashboard:
 1. Complete checkout on hosted Stripe page.
 2. Open `success.html?session_id=...`.
 3. Fetch grant token from `/.netlify/functions/get_grant_token`.
-4. Call local endpoint:
+4. Redeem on the local node using the official contract:
 
 ```bash
 curl -X POST http://127.0.0.1:8787/api/redeem_grant \
   -H 'Content-Type: application/json' \
   -d '{"renter":"demo","token":"<grant_token_here>"}'
 ```
+
+### API contract
+
+**Endpoint**: `POST /api/redeem_grant`
+
+**Request JSON**
+
+```json
+{
+  "renter": "string (required)",
+  "token": "string (required, signed grant token)"
+}
+```
+
+**Response JSON**
+
+```json
+{
+  "ok": true,
+  "renter": "demo",
+  "credited": 2000,
+  "credits_total": 5000
+}
+```
+
+Error responses follow the shape `{"ok": false, "error": "<code>"}` (for example: `missing_renter_or_token`, `renter_mismatch`, `expired_token`).
 
 ### Security notes
 

@@ -31,4 +31,13 @@ Set in Netlify site settings (Build & deploy → Environment):
    `/.netlify/functions/create_checkout_session?renter=alice&tier=Gold&credits=1000&duration=3600`
 3. Complete payment with Stripe test card.
 4. Open `/success.html?session_id=<id>` and load the grant token.
-5. Redeem token on local RamIA node endpoint `/api/redeem_grant_token`.
+5. Redeem token on local RamIA node endpoint `POST /api/redeem_grant` using JSON body `{"renter":"alice","token":"<grant_token>"}`.
+
+## API contract
+
+Use a single redemption contract across docs/UI/backend:
+
+- **HTTP**: `POST /api/redeem_grant`
+- **Request JSON**: `renter` (string, required), `token` (string, required)
+- **Success JSON**: `ok`, `renter`, `credited`, `credits_total`
+- **Error JSON**: `ok=false` with `error` code
