@@ -1,309 +1,251 @@
-# RamIA CLI Runtime Guide (Blockchain + Wallet Only)
+RamIA Core — Developer Guide (Terminal Edition)
 
-This repository is now focused on **terminal-first usage** of the blockchain and wallet components.
+A terminal-first node implementation inspired by the “Core” workflow: you run a local node, manage data directories, mine/test blocks, create transactions, and inspect chain state from the command line.
 
-- No static web deployment.
-- No Netlify workflow.
-- No PWA assets.
+> This is developer software. Expect breaking changes. Run locally first.
 
-If you want to run RamIA reliably, this README is the complete guide.
 
----
 
-## 1) What is included in this codebase
-
-### Core blockchain engine
-- `aichain.py`
-  - Minimal blockchain ledger.
-  - Mempool + transaction admission.
-  - Proof-of-Work mining.
-  - CLI commands for init, balance, send, mine, and chain history.
-
-### Tokenomics-enabled chain
-- `ramia_core_v1.py`
-  - Extends `aichain.ChainDB` with deterministic token emission logic.
-  - Tracks pool state in `token_state.json`.
-  - CLI commands for `init`, `mine`, and `status`.
-
-- `tokenomics_v1.py`
-  - Allocation model and reward math.
-  - Includes deterministic self-test mode.
-
-### Wallet and cryptography utilities
-- `wallet_secure.py`
-  - Encrypted wallet file creation and public identity export.
-  - Commands: `create`, `info`, `export-pub`.
-
-- `crypto_backend.py` and `crypto_selftest.py`
-  - Crypto provider abstraction and self-tests.
-
-### Optional AI guard / model training
-- `aiguardian.py`
-  - Train/load guardian model for guarded variants.
-
-- `scripts/make_dataset_demo.sh`
-  - Generate a demo dataset for guardian training.
 
 ---
 
-## 2) Minimal runtime requirements
+Contents
 
-- Git
-- Python 3.10+ (3.11 recommended)
-- pip
+What is RamIA Core
 
-> Node.js is no longer required for the CLI-only blockchain/wallet flow.
+Quickstart
 
-Check environment:
+Data directory layout
 
-```bash
-git --version
-python3 --version
-pip3 --version
-```
+Commands
+
+Termux / Linux / macOS / Windows setup
+
+Troubleshooting
+
+Security notes
+
+
 
 ---
 
-## 3) Quick start (all platforms, conceptually)
+What is RamIA Core
 
-After cloning the repository, the common flow is:
+RamIA Core is a local node you run on your own machine. It maintains a chain database under a data directory and exposes a terminal workflow similar to “core clients”:
 
-1. (Optional but recommended) Create virtual environment.
-2. Run tokenomics self-test.
-3. Initialize chain data.
-4. Mine blocks.
-5. Send transactions.
-6. Inspect balances and chain.
-7. (Optional) Create a secure wallet file.
+initialize a datadir
 
-Common command examples:
+mine blocks (dev/test)
 
-```bash
-python3 tokenomics_v1.py --self-test
+create and broadcast transactions
+
+inspect chain state
+
+
+At the moment, the repository ships a single chain engine script:
+
+aichain.py — local chain + mining + tx send + chain inspection
+
+
+(If you’ve seen references to tokenomics_v1.py, wallet_secure.py, etc., those are optional modules and may not exist in your current repo snapshot.)
+
+
+---
+
+Quickstart (5 minutes)
+
+Termux / Linux / macOS
+
+cd ~
+rm -rf RamIA
+git clone https://github.com/rami-mahdi647/RamIA.git
+cd RamIA
+
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+
+# 1) Initialize chain data directory
 python3 aichain.py --datadir ./aichain_data init
-python3 aichain.py --datadir ./aichain_data mine miner_demo
-python3 aichain.py --datadir ./aichain_data send genesis alice 1000000 --fee 1000 --memo "mempool demo"
+
+# 2) Mine 1 block (dev/test)
+python3 aichain.py --datadir ./aichain_data mine miner_dev
+
+# 3) Send a test transaction
+python3 aichain.py --datadir ./aichain_data send genesis alice 1000000 --fee 1000 --memo "hello"
+
+# 4) Inspect chain
 python3 aichain.py --datadir ./aichain_data chain --n 10
-```
 
----
+Windows (PowerShell)
 
-## 4) Termux (Android) — full setup
-
-```bash
-pkg update -y && pkg upgrade -y
-pkg install -y git python
-```
-
-Clone:
-
-```bash
-git clone <[>](https://github.com/rami-mahdi647/RamIA)
+cd $HOME
+if (Test-Path RamIA) { Remove-Item -Recurse -Force RamIA }
+git clone https://github.com/rami-mahdi647/RamIA.git
 cd RamIA
-```
 
-Optional virtual environment:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-```
-
-Run checks + chain:
-
-```bash
-python tokenomics_v1.py --self-test
-python aichain.py --datadir ./aichain_data init
-python aichain.py --datadir ./aichain_data mine miner_termux
-python aichain.py --datadir ./aichain_data chain --n 5
-```
-
-Secure wallet:
-
-```bash
-python wallet_secure.py create --out ./wallet.json --label termux_wallet
-python wallet_secure.py info --wallet ./wallet.json
-python wallet_secure.py export-pub --wallet ./wallet.json --out ./wallet_public.json
-```
-
----
-
-## 5) Kali Linux — full setup
-
-```bash
-sudo apt update
-sudo apt install -y git python3 python3-venv python3-pip
-```
-
-Clone + venv:
-
-```bash
-git clone <YOUR_REPO_URL>
-cd RamIA
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-```
-
-Run:
-
-```bash
-python tokenomics_v1.py --self-test
-python aichain.py --datadir ./aichain_data init
-python aichain.py --datadir ./aichain_data mine miner_kali
-python aichain.py --datadir ./aichain_data balance genesis
-```
-
-Tokenomics-enabled mining:
-
-```bash
-python ramia_core_v1.py --datadir ./aichain_data_v1 init
-python ramia_core_v1.py --datadir ./aichain_data_v1 mine miner_kali
-python ramia_core_v1.py --datadir ./aichain_data_v1 status
-```
-
----
-
-## 6) Ubuntu — full setup
-
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y git python3 python3-venv python3-pip
-```
-
-Clone + venv:
-
-```bash
-git clone <YOUR_REPO_URL>
-cd RamIA
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-```
-
-Run standard chain flow:
-
-```bash
-python tokenomics_v1.py --self-test
-python aichain.py --datadir ./aichain_data init
-python aichain.py --datadir ./aichain_data mine miner_ubuntu
-python aichain.py --datadir ./aichain_data send genesis bob 2500000 --fee 1000
-python aichain.py --datadir ./aichain_data chain --n 10
-```
-
-Run secure wallet utilities:
-
-```bash
-python wallet_secure.py create --out ./wallet.json --label ubuntu_wallet
-python wallet_secure.py info --wallet ./wallet.json
-```
-
----
-
-## 7) macOS — full setup
-
-Install dependencies (Homebrew):
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install git python
-```
-
-Clone + venv:
-
-```bash
-git clone <YOUR_REPO_URL>
-cd RamIA
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-```
-
-Run:
-
-```bash
-python tokenomics_v1.py --self-test
-python aichain.py --datadir ./aichain_data init
-python aichain.py --datadir ./aichain_data mine miner_macos
-python aichain.py --datadir ./aichain_data chain --n 10
-```
-
----
-
-## 8) Windows (PowerShell) — full setup
-
-Install first:
-- Git for Windows
-- Python 3.10+ (enable **Add Python to PATH**)
-
-Clone:
-
-```powershell
-git clone <YOUR_REPO_URL>
-cd RamIA
-```
-
-Create + activate virtual environment:
-
-```powershell
-py -3 -m venv .venv
+py -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-```
+py -m pip install --upgrade pip
 
-Run chain and tokenomics:
+py aichain.py --datadir .\aichain_data init
+py aichain.py --datadir .\aichain_data mine miner_dev
+py aichain.py --datadir .\aichain_data send genesis alice 1000000 --fee 1000 --memo "hello"
+py aichain.py --datadir .\aichain_data chain --n 10
 
-```powershell
-python tokenomics_v1.py --self-test
-python aichain.py --datadir .\aichain_data init
-python aichain.py --datadir .\aichain_data mine miner_windows
-python aichain.py --datadir .\aichain_data chain --n 5
-python ramia_core_v1.py --datadir .\aichain_data_v1 init
-python ramia_core_v1.py --datadir .\aichain_data_v1 mine miner_windows
-python ramia_core_v1.py --datadir .\aichain_data_v1 status
-```
-
-Wallet commands:
-
-```powershell
-python wallet_secure.py create --out .\wallet.json --label windows_wallet
-python wallet_secure.py info --wallet .\wallet.json
-python wallet_secure.py export-pub --wallet .\wallet.json --out .\wallet_public.json
-```
 
 ---
 
-## 9) Useful troubleshooting
+Data directory
 
-- **Transaction appears accepted but later not mined**
-  - In the standalone CLI flow, mempool is in-memory per process. If you run `send` and then exit, a later `mine` command in a new process will not include that previous mempool entry.
+All chain state lives under --datadir (similar to how core clients keep chainstate under a single data dir).
 
-- **Mining seems slow**
-  - This code uses PoW difficulty (`bits`) and can take time depending on CPU and current state.
+Example:
 
-- **Wallet creation asks for passphrase**
-  - This is expected. Use a strong passphrase and keep wallet files private.
+./aichain_data/
 
-- **Reset local chain state**
-  - Remove your selected data directory (`./aichain_data` or `./aichain_data_v1`) and initialize again.
+
+To start fresh:
+
+rm -rf ./aichain_data
+python3 aichain.py --datadir ./aichain_data init
+
 
 ---
 
-## 10) Recommended daily CLI workflow
+Command reference (current)
 
-```bash
-# 1) validate deterministic math
-python3 tokenomics_v1.py --self-test
+Initialize
 
-# 2) mine on base chain
-python3 aichain.py --datadir ./aichain_data mine miner_daily
+python3 aichain.py --datadir ./aichain_data init
 
-# 3) inspect recent chain
+Mine (dev/test)
+
+python3 aichain.py --datadir ./aichain_data mine <miner_label_or_address>
+
+Notes:
+
+On Termux, mining can be slow (phone CPU). Stop with Ctrl+C.
+
+
+Send transaction
+
+python3 aichain.py --datadir ./aichain_data send <from> <to> <amount> --fee <fee> --memo "<text>"
+
+Example:
+
+python3 aichain.py --datadir ./aichain_data send genesis alice 1000000 --fee 1000 --memo "mempool demo"
+
+Inspect chain
+
 python3 aichain.py --datadir ./aichain_data chain --n 20
 
-# 4) inspect tokenomics chain state
-python3 ramia_core_v1.py --datadir ./aichain_data_v1 status
-```
 
-This gives you a clean, terminal-native RamIA workflow centered on blockchain and wallet functionality.
+---
+
+Platform setup
+
+Termux
+
+pkg update -y
+pkg install -y python git
+
+Then follow Quickstart (Termux/Linux/macOS).
+
+Linux (Ubuntu/Kali)
+
+sudo apt update
+sudo apt install -y python3 python3-venv git
+
+macOS
+
+Install Python and git (recommended via Homebrew):
+
+brew install python git
+
+Windows
+
+Install Python 3 from python.org
+
+Install Git for Windows (recommended)
+
+
+
+---
+
+Troubleshooting
+
+git clone <[>](https://...) fails
+
+That’s a formatted link, not a shell command.
+
+✅ Correct command:
+
+git clone https://github.com/rami-mahdi647/RamIA.git
+
+can't open file ... tokenomics_v1.py (or wallet_secure.py / ramia_core_v1.py)
+
+Those files are not present in your current repo snapshot.
+
+Check:
+
+ls -la tokenomics_v1.py wallet_secure.py ramia_core_v1.py 2>/dev/null || echo "missing optional files"
+
+Use only commands that match files that exist (Quickstart uses aichain.py only).
+
+Mining is slow on Termux
+
+Expected. PoW on mobile can take time.
+
+Options:
+
+run on desktop
+
+mine fewer blocks
+
+(future) add a lower difficulty/dev mode flag in code
+
+
+
+---
+
+Security notes (developer)
+
+Never paste wallet files or keys into chat or issues.
+
+Do not commit secrets. Add to .gitignore:
+
+aichain_data/
+
+wallet*.json
+
+*.key
+
+*.bin
+
+*.jsonl
+
+
+
+
+---
+
+Development philosophy (Core-like)
+
+Terminal-first
+
+One datadir
+
+Small, auditable code paths
+
+Build features only when they run end-to-end locally:
+
+1. wallet → 2) tx → 3) mempool → 4) blocks → 5) policies (guardian/fees) → 6) bot leasing
+
+
+
+
+
+---
+
+If you want, I can also write a ramia-cli wrapper (single command like bitcoin-cli) so you stop calling aichain.py directly—still terminal-only, still “Core-like”.
