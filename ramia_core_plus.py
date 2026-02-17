@@ -22,24 +22,16 @@ class ExtendedHandler(aicore_plus.LocalHandlerPlus):
             token = str(data.get("token", "")).strip()
             if not renter or not token:
                 return {"ok": False, "error": "missing_renter_or_token"}
+ codex/implementar-gestion-de-grants-canjeados
             try:
-                payload = stripe_bridge.verify_grant_token(token)
-                if payload["renter"] != renter:
-                    return {"ok": False, "error": "renter_mismatch"}
-                out = stripe_bridge.apply_credit_to_market(self.ctxp.core.market, renter, payload["credits_to_add"])
-                self.ctxp.core.audit.append(
-                    {
-                        "type": "stripe_grant_redeem_v1",
-                        "renter": renter,
-                        "credits": payload["credits_to_add"],
-                        "bots_count": payload["bots_count"],
-                        "session_id": payload.get("session_id", "unknown"),
-                    }
-                )
-                self.ctxp.core.save()
+                ok, out = stripe_bridge.redeem_grant_token(self.ctxp, token, expected_renter=renter)
                 return out
             except Exception as exc:
                 return {"ok": False, "error": str(exc)}
+
+            _, out = stripe_bridge.redeem_grant_token(self.ctxp, token, expected_renter=renter)
+            return out
+ main
         return super().route(path, data)
 
 

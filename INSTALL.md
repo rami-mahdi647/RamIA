@@ -42,10 +42,15 @@ export SITE_URL=http://localhost:8888
 export STRIPE_SECRET_KEY=sk_test_...
 export STRIPE_WEBHOOK_SECRET=whsec_...
 export STRIPE_GRANT_SECRET=change_me
+export GRANT_FETCH_TTL_SECONDS=600
 npx netlify dev
 ```
 
-## 7) Redeem a grant token in local node
+## 7) Retrieve + redeem grant token in local node
+
+1. Complete checkout and keep the full success URL (it now includes `session_id` + `grant_key`).
+2. Use the success page button (or call `/.netlify/functions/get_grant_token?session_id=...&grant_key=...`).
+3. Redeem the returned token locally:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8787/api/redeem_grant \

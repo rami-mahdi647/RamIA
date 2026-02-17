@@ -51,6 +51,7 @@ def as_bool(cfg, k, default):
 
 class ExtendedHandler(aicore_plus.LocalHandlerPlus):
     def route(self, path, data):
+ codex/consolidate-api-contract-across-documentation
         if path == "/api/redeem_grant":
             renter = str(data.get("renter", "")).strip()
             token = str(data.get("token", "")).strip()
@@ -74,6 +75,12 @@ class ExtendedHandler(aicore_plus.LocalHandlerPlus):
                 return out
             except Exception as exc:
                 return {"ok": False, "error": str(exc)}
+
+        if path == "/api/redeem_grant_token":
+            token = str(data.get("grant_token", "")).strip()
+            _, out = stripe_bridge.redeem_grant_token(self.ctxp, token)
+            return out
+ main
         return super().route(path, data)
 
 
