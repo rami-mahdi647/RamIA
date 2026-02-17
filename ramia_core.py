@@ -53,10 +53,8 @@ class ExtendedHandler(aicore_plus.LocalHandlerPlus):
     def route(self, path, data):
         if path == "/api/redeem_grant_token":
             token = str(data.get("grant_token", "")).strip()
-            if not token:
-                return {"ok": False, "error": "missing_grant_token"}
-            ok, out = stripe_bridge.redeem_grant_token(self.ctxp, token)
-            return out if ok else out
+            _, out = stripe_bridge.redeem_grant_token(self.ctxp, token)
+            return out
         return super().route(path, data)
 
 

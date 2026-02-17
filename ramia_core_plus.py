@@ -22,11 +22,16 @@ class ExtendedHandler(aicore_plus.LocalHandlerPlus):
             token = str(data.get("token", "")).strip()
             if not renter or not token:
                 return {"ok": False, "error": "missing_renter_or_token"}
+ codex/implementar-gestion-de-grants-canjeados
             try:
                 ok, out = stripe_bridge.redeem_grant_token(self.ctxp, token, expected_renter=renter)
                 return out
             except Exception as exc:
                 return {"ok": False, "error": str(exc)}
+
+            _, out = stripe_bridge.redeem_grant_token(self.ctxp, token, expected_renter=renter)
+            return out
+ main
         return super().route(path, data)
 
 

@@ -70,6 +70,7 @@ def apply_credit_to_market(core_market: Any, renter: str, credits_to_add: int) -
     }
 
 
+ codex/implementar-gestion-de-grants-canjeados
 def redeem_grant_token(ctxp: Any, token: str, expected_renter: str | None = None) -> tuple[bool, Dict[str, Any]]:
     try:
         payload = verify_grant_token(token)
@@ -105,3 +106,31 @@ def redeem_grant_token(ctxp: Any, token: str, expected_renter: str | None = None
     ctxp.core.save()
     out["grant_id"] = grant_id
     return True, out
+
+def redeem_grant_token(ctxp: Any, token: str, expected_renter: str | None = None):
+    token = str(token or "").strip()
+    if not token:
+        return False, {"ok": False, "error": "missing_grant_token"}
+
+    try:
+        payload = verify_grant_token(token)
+        renter = payload["renter"]
+        if expected_renter and renter != expected_renter:
+            return False, {"ok": False, "error": "renter_mismatch"}
+
+        out = apply_credit_to_market(ctxp.core.market, renter, payload["credits_to_add"])
+        ctxp.core.audit.append(
+            {
+                "type": "stripe_grant_redeem_v1",
+                "renter": renter,
+                "credits": payload["credits_to_add"],
+                "bots_count": payload["bots_count"],
+                "session_id": payload.get("session_id", "unknown"),
+            }
+        )
+        ctxp.core.save()
+        return True, out
+    except Exception as exc:
+        code = str(exc)
+        return False, {"ok": False, "error": code}
+ main
