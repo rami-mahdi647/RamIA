@@ -1,521 +1,309 @@
-# RamIA — Developer Runtime Guide
+# RamIA CLI Runtime Guide (Blockchain + Wallet Only)
 
-This repository README is for technical users who want to run RamIA from the terminal on local machines (Linux, Ubuntu, macOS, and Windows).
+This repository is now focused on **terminal-first usage** of the blockchain and wallet components.
 
-> Focus: running the software stack locally (node process + local web/API surface). This is not a marketing or Netlify-first guide.
+- No static web deployment.
+- No Netlify workflow.
+- No PWA assets.
 
-## What this repository contains
+If you want to run RamIA reliably, this README is the complete guide.
 
-- `ramia_core_plus.py`: main local runtime entrypoint (web server + local API routes).
-- `aicore_plus.py`: local application context and handler stack used by `ramia_core_plus.py`.
-- `aichain.py`, `ramia_core.py`, `ramia_core_v1.py`: chain/runtime variants and related CLI flows.
-- `ui_plus.html`: local UI served by the runtime.
-- `site/`: static web assets for hosted/browser-facing frontend.
+---
 
-## Prerequisites
+## 1) What is included in this codebase
+
+### Core blockchain engine
+- `aichain.py`
+  - Minimal blockchain ledger.
+  - Mempool + transaction admission.
+  - Proof-of-Work mining.
+  - CLI commands for init, balance, send, mine, and chain history.
+
+### Tokenomics-enabled chain
+- `ramia_core_v1.py`
+  - Extends `aichain.ChainDB` with deterministic token emission logic.
+  - Tracks pool state in `token_state.json`.
+  - CLI commands for `init`, `mine`, and `status`.
+
+- `tokenomics_v1.py`
+  - Allocation model and reward math.
+  - Includes deterministic self-test mode.
+
+### Wallet and cryptography utilities
+- `wallet_secure.py`
+  - Encrypted wallet file creation and public identity export.
+  - Commands: `create`, `info`, `export-pub`.
+
+- `crypto_backend.py` and `crypto_selftest.py`
+  - Crypto provider abstraction and self-tests.
+
+### Optional AI guard / model training
+- `aiguardian.py`
+  - Train/load guardian model for guarded variants.
+
+- `scripts/make_dataset_demo.sh`
+  - Generate a demo dataset for guardian training.
+
+---
+
+## 2) Minimal runtime requirements
 
 - Git
-- Python 3.10+
-- Node.js 18+ and npm (required for JS dependencies used in this repo)
+- Python 3.10+ (3.11 recommended)
+- pip
 
-Check your environment:
+> Node.js is no longer required for the CLI-only blockchain/wallet flow.
 
-```bash
-git --version
-python3 --version
-node --version
-npm --version
-```
-
-## Clone and install
-# RamIA (Technical README)
-
-Repositorio técnico de **RamIA** para ejecutar nodo local, motor de tokenomics y pruebas de integración de pagos (Stripe + funciones serverless).
-
-> Este README está orientado a personas técnicas que trabajan desde terminal (CLI), no al flujo básico de la web pública.
-
-## 1) Arquitectura del repositorio
-
-- **Núcleo local (Python)**
-  - `aichain.py`, `aicore_plus.py`, `ramia_core.py`, `ramia_core_plus.py`, `ramia_core_v1.py`
-  - Ejecutan nodo local, estado, web local y endpoint de canje de grants.
-- **Tokenomics (Python)**
-  - `tokenomics_v1.py`
-  - Incluye validación determinista con `--self-test`.
-- **Puente Stripe (Python)**
-  - `stripe_bridge.py`
-  - Verificación/canje local de tokens de grant.
-- **Funciones serverless (Node.js)**
-  - `netlify/functions/*.js`
-  - Checkout + webhook + obtención de grant token.
-- **Frontend estático (PWA)**
-  - `site/*`
-  - UI estática desplegable en Netlify u otro hosting estático.
-
----
-
-## 2) Requisitos
-
-### Requisitos generales
-
-- `git`
-- `python3` (recomendado 3.10+)
-- `node` + `npm` (recomendado Node 18+)
-
-### Verificación rápida
+Check environment:
 
 ```bash
 git --version
 python3 --version
-node --version
-npm --version
+pip3 --version
 ```
 
 ---
 
-## 3) Clonar e instalar dependencias
+## 3) Quick start (all platforms, conceptually)
 
-```bash
-git clone <URL_DEL_REPO>
-cd RamIA
-npm install
-```
+After cloning the repository, the common flow is:
 
-> `npm install` instala dependencias usadas por funciones serverless (`stripe`, `@netlify/blobs`).
+1. (Optional but recommended) Create virtual environment.
+2. Run tokenomics self-test.
+3. Initialize chain data.
+4. Mine blocks.
+5. Send transactions.
+6. Inspect balances and chain.
+7. (Optional) Create a secure wallet file.
 
----
-
-## 4) Ejecución por sistema operativo
-
-## Linux (genérico)
-
-### Instalar runtime (Debian/Ubuntu)
-
-```bash
-sudo apt update
-sudo apt install -y git python3 python3-venv python3-pip nodejs npm
-```
-
-### Ejecutar nodo local
-
-```bash
-git clone <REPO_URL>
-cd RamIA
-npm install
-```
-
----
-
-## Platform setup
-
-### Linux (generic)
-
-### Ejecutar self-test de tokenomics
-ain
-
-```bash
-sudo apt update
-sudo apt install -y git python3 python3-venv python3-pip nodejs npm
-```
-
-Then run:
-
-```bash
-git clone <REPO_URL>
-cd RamIA
-npm install
-python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web --web-host 127.0.0.1 --web-port 8787
-```
-
-### Ubuntu (recommended flow)
-
-1) Install dependencies:
-
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y git curl python3 python3-venv python3-pip nodejs npm
-```
-
-2) Clone and install:
-
----
-
-## Ubuntu (paso a paso recomendado)
-
-### 1. Dependencias
-
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y git curl python3 python3-venv python3-pip nodejs npm
-```
-
-### 2. Clonar e instalar
-
-```bash
-git clone <URL_DEL_REPO>
-cd RamIA
-npm install
-```
-
-### 3. Arrancar nodo local
-
-```bash
-python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web --web-host 127.0.0.1 --web-port 8787
-```
-
-### 4. Validar estado (tokenomics + minería v1)
+Common command examples:
 
 ```bash
 python3 tokenomics_v1.py --self-test
-python3 ramia_core_v1.py --datadir ./aichain_data_v1 mine miner_demo
-python3 ramia_core_v1.py --datadir ./aichain_data_v1 status
+python3 aichain.py --datadir ./aichain_data init
+python3 aichain.py --datadir ./aichain_data mine miner_demo
+python3 aichain.py --datadir ./aichain_data send genesis alice 1000000 --fee 1000 --memo "mempool demo"
+python3 aichain.py --datadir ./aichain_data chain --n 10
 ```
 
 ---
 
-## macOS
-
-### Instalar herramientas base (Homebrew)
+## 4) Termux (Android) — full setup
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install python node git
+pkg update -y && pkg upgrade -y
+pkg install -y git python
 ```
 
-### Ejecutar proyecto
+Clone:
 
 ```bash
-git clone <URL_DEL_REPO>
+git clone <YOUR_REPO_URL>
 cd RamIA
-npm install
-python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web
 ```
 
-### Tests rápidos
+Optional virtual environment:
 
 ```bash
-python3 tokenomics_v1.py --self-test
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
 ```
 
+Run checks + chain:
+
 ```bash
-git clone <REPO_URL>
+python tokenomics_v1.py --self-test
+python aichain.py --datadir ./aichain_data init
+python aichain.py --datadir ./aichain_data mine miner_termux
+python aichain.py --datadir ./aichain_data chain --n 5
+```
+
+Secure wallet:
+
+```bash
+python wallet_secure.py create --out ./wallet.json --label termux_wallet
+python wallet_secure.py info --wallet ./wallet.json
+python wallet_secure.py export-pub --wallet ./wallet.json --out ./wallet_public.json
+```
+
+---
+
+## 5) Kali Linux — full setup
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv python3-pip
+```
+
+Clone + venv:
+
+```bash
+git clone <YOUR_REPO_URL>
 cd RamIA
-npm install
-```
-
-3) Start local runtime:
-
-```bash
-python3 ramia_core_plus.py \
-  --guardian-model ./guardian_model.json \
-  --web \
-  --web-host 127.0.0.1 \
-  --web-port 8787
-```
-
-### macOS
-
-Install tools (Homebrew):
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install git python node
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
 ```
 
 Run:
 
 ```bash
-git clone <REPO_URL>
-cd RamIA
-npm install
-python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web
+python tokenomics_v1.py --self-test
+python aichain.py --datadir ./aichain_data init
+python aichain.py --datadir ./aichain_data mine miner_kali
+python aichain.py --datadir ./aichain_data balance genesis
 ```
 
-### Windows (PowerShell)
+Tokenomics-enabled mining:
+
+```bash
+python ramia_core_v1.py --datadir ./aichain_data_v1 init
+python ramia_core_v1.py --datadir ./aichain_data_v1 mine miner_kali
+python ramia_core_v1.py --datadir ./aichain_data_v1 status
+```
+
+---
+
+## 6) Ubuntu — full setup
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git python3 python3-venv python3-pip
+```
+
+Clone + venv:
+
+```bash
+git clone <YOUR_REPO_URL>
+cd RamIA
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+```
+
+Run standard chain flow:
+
+```bash
+python tokenomics_v1.py --self-test
+python aichain.py --datadir ./aichain_data init
+python aichain.py --datadir ./aichain_data mine miner_ubuntu
+python aichain.py --datadir ./aichain_data send genesis bob 2500000 --fee 1000
+python aichain.py --datadir ./aichain_data chain --n 10
+```
+
+Run secure wallet utilities:
+
+```bash
+python wallet_secure.py create --out ./wallet.json --label ubuntu_wallet
+python wallet_secure.py info --wallet ./wallet.json
+```
+
+---
+
+## 7) macOS — full setup
+
+Install dependencies (Homebrew):
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install git python
+```
+
+Clone + venv:
+
+```bash
+git clone <YOUR_REPO_URL>
+cd RamIA
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+```
+
+Run:
+
+```bash
+python tokenomics_v1.py --self-test
+python aichain.py --datadir ./aichain_data init
+python aichain.py --datadir ./aichain_data mine miner_macos
+python aichain.py --datadir ./aichain_data chain --n 10
+```
+
+---
+
+## 8) Windows (PowerShell) — full setup
 
 Install first:
 - Git for Windows
-- Python 3 (enable **Add python.exe to PATH**)
-- Node.js LTS
+- Python 3.10+ (enable **Add Python to PATH**)
 
-Then run:
+Clone:
 
 ```powershell
-git clone <REPO_URL>
+git clone <YOUR_REPO_URL>
 cd RamIA
-npm install
-py -3 ramia_core_plus.py --guardian-model .\guardian_model.json --web --web-host 127.0.0.1 --web-port 8787
 ```
 
-### Windows option: WSL2 + Ubuntu
-
-If you prefer a Linux-like workflow on Windows, use WSL2 Ubuntu and follow the Ubuntu section above.
-
----
-
-## Running the software
-
-## Main runtime command
-
-```bash
-python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web
-```
-
-Useful flags:
-
-- `--datadir <path>`: chain/state directory.
-- `--web`: force-enable local web server.
-- `--no-web`: disable local web server.
-- `--web-host <host>`: bind host (default from config, commonly `127.0.0.1`).
-- `--web-port <port>`: bind port (default commonly `8787`).
-- `--conf <path>`: use custom runtime config file.
-
-
-## Static dashboard pages must be served over HTTP
-
-Do **not** open dashboard/site HTML files by double-clicking (`file://...`). Always use an HTTP URL such as `http://localhost:...` or your deployed host so hosted-relative links and function routes resolve correctly.
-
-Recommended local options from repo root:
-
-```bash
-npx netlify dev
-# open http://localhost:8888/
-```
-
-For static-only checks:
-
-```bash
-cd site
-python3 -m http.server 8080
-# open http://localhost:8080/
-```
-
-## Local endpoint contract
-
-When the runtime is started with web enabled, it exposes:
-
-- `POST /api/redeem_grant`
-
-Request body:
-## Windows (PowerShell)
-
-### Opción A (nativa)
-
-1. Instala:
-   - Git for Windows
-   - Python 3 (marcar "Add python.exe to PATH")
-   - Node.js LTS
-
-2. En PowerShell:
+Create + activate virtual environment:
 
 ```powershell
-git clone <URL_DEL_REPO>
-cd RamIA
-npm install
-py -3 ramia_core_plus.py --guardian-model .\guardian_model.json --web
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 ```
 
-3. Self-test:
+Run chain and tokenomics:
 
 ```powershell
-py -3 tokenomics_v1.py --self-test
+python tokenomics_v1.py --self-test
+python aichain.py --datadir .\aichain_data init
+python aichain.py --datadir .\aichain_data mine miner_windows
+python aichain.py --datadir .\aichain_data chain --n 5
+python ramia_core_v1.py --datadir .\aichain_data_v1 init
+python ramia_core_v1.py --datadir .\aichain_data_v1 mine miner_windows
+python ramia_core_v1.py --datadir .\aichain_data_v1 status
 ```
 
-### Opción B (recomendada para entorno Linux en Windows): WSL2 + Ubuntu
-
-Usa la sección de **Ubuntu** de este README.
-
----
-
-## 5) Ejecución de funciones serverless (modo local rápido)
-
-Prueba de contrato básico de la función `create_checkout_session` sin levantar Netlify completo:
-
-```bash
-node -e "const fn=require('./netlify/functions/create_checkout_session'); fn.handler({httpMethod:'POST',body:JSON.stringify({renter:'demo',bots_count:2})}).then(x=>console.log(x.statusCode));"
-```
-
-> Para crear sesiones reales en Stripe, define variables de entorno válidas y salida a Internet.
-
----
-
-## 6) Variables de entorno (Stripe / serverless)
-
-Variables usadas por funciones:
-
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `SITE_URL`
-- `STRIPE_GRANT_SECRET` (opcional, recomendado)
-- `BOT_RENT_PRICE_USD` (opcional; default `1000`)
-- `GRANT_FETCH_TTL_SECONDS` (opcional; default `600`)
-
-Ejemplo Linux/macOS:
-
-```bash
-export STRIPE_SECRET_KEY='sk_live_or_test_xxx'
-export STRIPE_WEBHOOK_SECRET='whsec_xxx'
-export SITE_URL='https://tu-dominio-o-netlify.app'
-```
-
-Ejemplo PowerShell:
+Wallet commands:
 
 ```powershell
-$env:STRIPE_SECRET_KEY='sk_live_or_test_xxx'
-$env:STRIPE_WEBHOOK_SECRET='whsec_xxx'
-$env:SITE_URL='https://tu-dominio-o-netlify.app'
-```
-
-### Webhook Python (wallet + asignación automática de bots)
-
-Nuevo servicio: `stripe_webhook.py`.
-
-Variables adicionales:
-
-- `WALLET_ENCRYPTION_PASSPHRASE` (obligatoria, mínimo 16 caracteres)
-- `WEBHOOK_DB_PATH` (opcional; default `./data/stripe_webhook.sqlite3`)
-- `PORT` (opcional; default `8000`)
-
-Ejemplo Linux/macOS:
-
-```bash
-export STRIPE_SECRET_KEY='sk_test_xxx'
-export STRIPE_WEBHOOK_SECRET='whsec_xxx'
-export WALLET_ENCRYPTION_PASSPHRASE='frase-larga-solo-servidor'
-export WEBHOOK_DB_PATH='./data/stripe_webhook.sqlite3'
-python3 stripe_webhook.py
-```
-
-El webhook `POST /webhook` valida firma Stripe, procesa solo `checkout.session.completed`, crea wallet cifrada para el usuario (si no existe), y asigna créditos de bots en SQLite. Nunca devuelve ni registra la private key en texto plano.
-
-### Prueba local con Stripe CLI (`checkout.session.completed`)
-
-1. Arranca el webhook local:
-
-```bash
-python3 stripe_webhook.py
-```
-
-2. En otra terminal, reenvía eventos de Stripe al webhook local:
-
-```bash
-stripe listen --forward-to localhost:8000/webhook
-```
-
-3. Copia el `whsec_...` mostrado por Stripe CLI y úsalo en `STRIPE_WEBHOOK_SECRET`.
-
-4. Dispara un evento de prueba con metadata (user y bots):
-
-```bash
-stripe trigger checkout.session.completed   --add checkout_session:metadata.user_id=user_demo_001   --add checkout_session:metadata.bots_purchased=3
-```
-
-5. Verifica asignación y wallet pública en SQLite:
-
-```bash
-sqlite3 ./data/stripe_webhook.sqlite3 "SELECT user_id,address,curve FROM user_wallets;"
-sqlite3 ./data/stripe_webhook.sqlite3 "SELECT user_id,wallet_address,credits,stripe_event_id FROM user_bot_assignments;"
-```
-
-6. Repite el mismo evento para verificar idempotencia: no debe duplicar `processed_events` para el mismo `stripe_event_id`.
-
-
----
-
-## 7) API local de canje de grant
-
-Endpoint expuesto por `ramia_core_plus.py`:
-
-- `POST /api/redeem_grant`
-
-Payload:
-
-```json
-{
-  "renter": "demo",
-  "token": "<grant_token>"
-}
-```
-
-Example request:
-
-Ejemplo:
-
-```bash
-curl -X POST http://127.0.0.1:8787/api/redeem_grant \
-  -H 'Content-Type: application/json' \
-  -d '{"renter":"demo","token":"<grant_token_here>"}'
+python wallet_secure.py create --out .\wallet.json --label windows_wallet
+python wallet_secure.py info --wallet .\wallet.json
+python wallet_secure.py export-pub --wallet .\wallet.json --out .\wallet_public.json
 ```
 
 ---
 
-## Minimal terminal verification
+## 9) Useful troubleshooting
 
-Run these after setup:
+- **Transaction appears accepted but later not mined**
+  - In the standalone CLI flow, mempool is in-memory per process. If you run `send` and then exit, a later `mine` command in a new process will not include that previous mempool entry.
+
+- **Mining seems slow**
+  - This code uses PoW difficulty (`bits`) and can take time depending on CPU and current state.
+
+- **Wallet creation asks for passphrase**
+  - This is expected. Use a strong passphrase and keep wallet files private.
+
+- **Reset local chain state**
+  - Remove your selected data directory (`./aichain_data` or `./aichain_data_v1`) and initialize again.
+
+---
+
+## 10) Recommended daily CLI workflow
 
 ```bash
-python3 ramia_core_plus.py --help
-python3 ramia_core.py --help
-python3 ramia_core_v1.py --help
-```
-
-If those CLI help commands work, your Python runtime and script entrypoints are correctly discovered.
-
----
-
-## Troubleshooting
-
-- `python3: command not found`
-  - Python is not installed or not in PATH.
-- `py : The term 'py' is not recognized` (Windows)
-  - Reinstall Python and ensure launcher/PATH integration is enabled.
-- `Error: Cannot find module ...` (Node)
-  - Run `npm install` in repo root.
-- Port already in use (`8787`)
-  - Start with `--web-port 8788` (or any free port).
-- Runtime fails to boot due to missing files
-  - Confirm `guardian_model.json` and `ui_plus.html` exist at expected paths.
-
----
-
-## Recommended developer workflow
-
-1. Install dependencies and clone the repo.
-2. Validate CLI entrypoints with `--help`.
-3. Start `ramia_core_plus.py` with explicit host/port.
-4. Hit local endpoints using `curl`.
-5. Iterate with custom `--datadir` and `--conf` profiles.
-
-## 8) Flujo de trabajo técnico recomendado
-
-1. Ejecutar pruebas deterministas de tokenomics.
-2. Validar nodo local (`ramia_core_plus.py`).
-3. Probar endpoint local `/api/redeem_grant` con token de prueba.
-4. Probar funciones serverless en local (contrato) o en entorno Netlify.
-5. Integrar webhook Stripe en entorno de staging antes de producción.
-
----
-
-## 9) Troubleshooting
-
-- **`python3: command not found`**
-  - Instalar Python y/o ajustar PATH.
-- **`Module not found` en Node**
-  - Ejecutar `npm install` en la raíz del repo.
-- **Error de Stripe en checkout**
-  - Revisar `STRIPE_SECRET_KEY`, `SITE_URL` y conectividad de red.
-- **No responde `POST /api/redeem_grant`**
-  - Confirmar que `ramia_core_plus.py` esté corriendo con `--web` y puerto correcto.
-
----
-
-## 10) Comandos de verificación mínima (copy/paste)
-
-```bash
+# 1) validate deterministic math
 python3 tokenomics_v1.py --self-test
-python3 ramia_core_v1.py --datadir ./aichain_data_v1 mine miner_demo
+
+# 2) mine on base chain
+python3 aichain.py --datadir ./aichain_data mine miner_daily
+
+# 3) inspect recent chain
+python3 aichain.py --datadir ./aichain_data chain --n 20
+
+# 4) inspect tokenomics chain state
 python3 ramia_core_v1.py --datadir ./aichain_data_v1 status
-python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web --web-port 8787
 ```
 
-Si necesitas un README adicional orientado a contribución (estilo `CONTRIBUTING.md`) con estándares de commits, release y CI, créalo separado de este README técnico.
+This gives you a clean, terminal-native RamIA workflow centered on blockchain and wallet functionality.
