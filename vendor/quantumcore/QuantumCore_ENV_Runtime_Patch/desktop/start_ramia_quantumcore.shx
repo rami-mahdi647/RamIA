@@ -1,0 +1,17 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -e
+
+# Start policy service if not running
+POLICY_URL="${RAMIA_POLICY_URL:-http://127.0.0.1:8787}"
+
+echo "[start] Make sure policy service is running:"
+echo "  python3 ~/RamIA/ramia_policy_service.py --host 127.0.0.1 --port 8787"
+echo ""
+
+cd "$(dirname "$0")"
+
+echo "[start] Installing deps (if needed)..."
+npm install
+
+echo "[start] Launching Electron with RamIA patched main..."
+RAMIA_POLICY_URL="$POLICY_URL" npx electron ./main.easywallet.ramia_patch.js

@@ -1,0 +1,56 @@
+// vendor/quantumcore/app-snippets/ramia_policy_client.ts
+export type TxPolicyReq = {
+  amount?: number;
+  fee?: number;
+  outputs?: number;
+  memo?: string;
+  to_addr?: string;
+  timestamp?: number;
+};
+
+export type TxPolicyResp = {
+  ok: boolean;
+  fee_multiplier: number;
+  reasons: string[];
+  suggestions: string[];
+  suspicion: number;
+};
+
+export type RewardReq = {
+  height: number;
+  minted: number;
+  active_miners?: number;
+  active_nodes?: number;
+  tx_count?: number;
+  mempool_size?: number;
+  fee_pressure?: number;
+};
+
+export type RewardResp = {
+  ok: boolean;
+  reward: number;
+  debug: any;
+};
+
+const DEFAULT_URL = process.env.RAMIA_POLICY_URL || "http://127.0.0.1:8787";
+
+async function postJSON<T>(path: string, body: any): Promise<T> {
+  const r = await fetch(`${DEFAULT_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`Policy HTTP ${r.status}`);
+  return (await r.json()) as T;
+}
+
+export async function txPolicy(req: TxPolicyReq): Promise<TxPolicyResp> {
+  return await postJSON<TxPolicyResp>("/tx_policy", {
+    ...req,
+    timestamp: req.timestamp ?? Math.floor(Date.now() / 1000),
+  });
+}
+
+export async function blockReward(req: RewardReq): Promise<RewardResp> {
+  return await postJSON<RewardResp>("/block_reward", req);
+}

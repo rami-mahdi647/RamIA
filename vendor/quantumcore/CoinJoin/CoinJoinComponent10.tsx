@@ -1,0 +1,1 @@
+export default function CoinJoinComponent10() { return <div>CoinJoin Component 10</div>; }

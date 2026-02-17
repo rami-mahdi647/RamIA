@@ -1,0 +1,1 @@
+export default function SubscriptionsComponent7() { return <div>Subscriptions Component 7</div>; }

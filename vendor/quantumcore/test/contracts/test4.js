@@ -1,0 +1,1 @@
+describe('Contract Test 4', () => { it('should work', () => {}) })

@@ -1,0 +1,16 @@
+{
+  "name": "quantumcore",
+  "version": "1.0.0",
+  "description": "QuantumCore Enterprise Blockchain Client",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "electron": "^28.2.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.13.3"
+  }
+}

@@ -1,0 +1,1 @@
+export default function DAOComponent10() { return <div>DAO Component 10</div>; }

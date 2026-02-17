@@ -1,0 +1,1 @@
+export default function Subscriptions(){return (<div className='space-y-4'><div className='badge'>Subscriptions</div><div>Conecta contratos para pagos recurrentes (scripts/subscriptions).</div></div>)}

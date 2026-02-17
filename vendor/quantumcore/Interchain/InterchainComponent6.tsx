@@ -1,0 +1,1 @@
+export default function InterchainComponent6() { return <div>Interchain Component 6</div>; }

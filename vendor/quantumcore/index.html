@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QuantumCore</title>
+  <link rel="stylesheet" href="styles/global.css" />
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">QuantumCore</div>
+    <nav id="nav">
+      <a href="#/dashboard" class="nav-item">Dashboard</a>
+      <a href="#/wallet" class="nav-item">Wallet</a>
+      <a href="#/coinjoin" class="nav-item">CoinJoin</a>
+      <a href="#/vaults" class="nav-item">Vaults & Minería</a>
+      <a href="#/dao" class="nav-item">DAO</a>
+      <a href="#/interchain" class="nav-item">Interchain Router</a>
+      <a href="#/ai" class="nav-item">AI‑as‑a‑Service</a>
+      <a href="#/market" class="nav-item">Market Sentinel</a>
+      <a href="#/models" class="nav-item">Model Lab</a>
+      <a href="#/subscriptions" class="nav-item">Subscriptions</a>
+      <a href="#/nfts" class="nav-item">NFTs</a>
+      <a href="#/settings" class="nav-item">Settings</a>
+    </nav>
+    <div class="footer">Predict • Outpace • Win</div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div class="title" id="title">Dashboard</div>
+      <div class="actions" id="actions"></div>
+    </header>
+
+    <section id="view" class="view"></section>
+  </main>
+
+  <script src="js/router.js"></script>
+  <script src="js/widgets.js"></script>
+  <script src="js/views/dashboard.js"></script>
+  <script src="js/views/wallet.js"></script>
+  <script src="js/views/coinjoin.js"></script>
+  <script src="js/views/vaults.js"></script>
+  <script src="js/views/dao.js"></script>
+  <script src="js/views/interchain.js"></script>
+  <script src="js/views/ai.js"></script>
+  <script src="js/views/market.js"></script>
+  <script src="js/views/models.js"></script>
+  <script src="js/views/subscriptions.js"></script>
+  <script src="js/views/nfts.js"></script>
+  <script src="js/views/settings.js"></script>
+  <script>Router.init();</script>
+</body>
+</html>

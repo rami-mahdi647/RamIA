@@ -1,0 +1,70 @@
+{
+  "name": "quantumcore-desktop",
+  "version": "1.1.1",
+  "private": true,
+  "main": "main.easywallet.full.js",
+  "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "start": "electron .",
+    "pack:win": "electron-builder --win nsis",
+    "pack:linux": "electron-builder --linux AppImage",
+    "pack:mac": "electron-builder --mac dmg"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "electron": "29.4.0",
+    "@stardust-collective/dag4": "^1.9.7",
+    "bitcoinjs-lib": "^6.1.7",
+    "ecpair": "^2.1.0",
+    "tiny-secp256k1": "^2.2.3",
+    "@cosmjs/stargate": "^0.35.3",
+    "@cosmjs/proto-signing": "^0.35.3",
+    "@scure/bip32": "^1.4.0",
+    "@scure/bip39": "^1.2.1",
+    "@noble/hashes": "^1.4.0",
+    "ethers": "^6.13.2",
+    "bech32": "^2.0.0",
+    "keytar": "^7.9.0"
+  },
+  "devDependencies": {
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.quantumcore.app",
+    "productName": "QuantumCore",
+    "files": [
+      "main.easywallet.full.js",
+      "preload.easywallet.full.js",
+      "app/**",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "QuantumCore-Setup-${version}.exe"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.developer-tools"
+    },
+    "extraResources": [
+      {
+        "from": "../.env",
+        "to": ".env",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  }
+}

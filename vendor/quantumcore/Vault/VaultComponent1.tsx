@@ -1,0 +1,1 @@
+export default function VaultComponent1() { return <div>Vault Component 1</div>; }
