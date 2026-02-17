@@ -15,6 +15,20 @@ RamIA runs locally (Termux/PC/Mac/Windows) while Netlify serves only static PWA 
 - `.github/workflows/release.yml`: tagged release builds via PyInstaller (Linux/Windows/macOS).
 - `.github/workflows/check-site.yml`: CI check that fails if `site/index.html` is missing.
 
+## Operational boundaries (quick guide)
+
+- **Static frontend PWA (`site/`)**: installable app shell, offline cache (`sw.js`), manifest metadata, and browser UI (`index.html`, `rent-bots.html`, `success.html`).
+- **Paid backend functions (`netlify/functions/`)**: Stripe Checkout creation, webhook validation, and secure token/grant delivery from Netlify serverless endpoints.
+- **Local blockchain core (`aichain*`, `ramia_core*`, `aicore*`)**: local Python node execution, mining/state updates, and chain datadir persistence.
+
+### Common symptom triage
+
+| Symptom | First checks |
+| --- | --- |
+| `PWA does not install` | Inspect `site/sw.js` registration/caching behavior and verify manifest fields/icons in `site/manifest.webmanifest` (or the active manifest referenced by `site/index.html`). |
+| `Checkout fails` | Validate Netlify function logs and environment variables (`STRIPE_SECRET_KEY`, `SITE_URL`, etc.) plus Stripe account/webhook setup. |
+| `Chain/node failure` | Review local Python scripts (`ramia_core*`, `aichain*`, `aicore*`) and confirm `--datadir` path, permissions, and current chain state files. |
+
 ## Local test commands
 
 ### 1) Node run
