@@ -53,7 +53,14 @@ npx netlify dev
 3. Redeem the returned token locally:
 
 ```bash
-curl -s http://127.0.0.1:8787/api/redeem_grant_token \
+curl -s -X POST http://127.0.0.1:8787/api/redeem_grant \
   -H 'Content-Type: application/json' \
-  -d '{"grant_token":"<paste_token_here>"}'
+  -d '{"renter":"demo","token":"<paste_token_here>"}'
 ```
+
+## API contract
+
+- Endpoint: `POST /api/redeem_grant`
+- Request body: `{"renter":"<id>","token":"<grant_token>"}`
+- Success response: `{"ok":true,"renter":"<id>","credited":<int>,"credits_total":<int>}`
+- Error response: `{"ok":false,"error":"<code>"}`

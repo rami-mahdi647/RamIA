@@ -51,10 +51,36 @@ def as_bool(cfg, k, default):
 
 class ExtendedHandler(aicore_plus.LocalHandlerPlus):
     def route(self, path, data):
+ codex/consolidate-api-contract-across-documentation
+        if path == "/api/redeem_grant":
+            renter = str(data.get("renter", "")).strip()
+            token = str(data.get("token", "")).strip()
+            if not renter or not token:
+                return {"ok": False, "error": "missing_renter_or_token"}
+            try:
+                payload = stripe_bridge.verify_grant_token(token)
+                if payload["renter"] != renter:
+                    return {"ok": False, "error": "renter_mismatch"}
+                out = stripe_bridge.apply_credit_to_market(self.ctxp.core.market, renter, payload["credits_to_add"])
+                self.ctxp.core.audit.append(
+                    {
+                        "type": "stripe_grant_redeem_v1",
+                        "renter": renter,
+                        "credits": payload["credits_to_add"],
+                        "bots_count": payload["bots_count"],
+                        "session_id": payload.get("session_id", "unknown"),
+                    }
+                )
+                self.ctxp.core.save()
+                return out
+            except Exception as exc:
+                return {"ok": False, "error": str(exc)}
+
         if path == "/api/redeem_grant_token":
             token = str(data.get("grant_token", "")).strip()
             _, out = stripe_bridge.redeem_grant_token(self.ctxp, token)
             return out
+ main
         return super().route(path, data)
 
 
@@ -66,7 +92,7 @@ def run_web_with_stripe(ctxp: aicore_plus.AppContextPlus, ui_html: str, host: st
     ExtendedHandler.ui_html = ui_html
     httpd = ThreadingHTTPServer((host, port), ExtendedHandler)
     print(f"[ramia-core] web=http://{host}:{port}")
-    print("[ramia-core] extra endpoint: POST /api/redeem_grant_token")
+    print("[ramia-core] extra endpoint: POST /api/redeem_grant")
     httpd.serve_forever()
 
 
