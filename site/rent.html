@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
- codex/create-pwa-website-with-stripe-integration
   <title>Rent Bots | RamIA</title>
   <meta name="description" content="Rent RamIA bot capacity through Stripe Payment Link checkout." />
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -12,26 +11,14 @@
     body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#070b16;color:#e8efff}
     .wrap{max-width:900px;margin:0 auto;padding:24px}
     .card{background:#121b34;border:1px solid #243863;border-radius:16px;padding:24px}
-    p,li{color:#9eb2d8;line-height:1.6}.btn{display:inline-block;margin-right:10px;margin-top:10px;padding:11px 16px;border-radius:10px;text-decoration:none;border:1px solid #3d5ea9;color:#fff}
+    p,li{color:#9eb2d8;line-height:1.6}
+    .btn{display:inline-block;margin-right:10px;margin-top:10px;padding:11px 16px;border-radius:10px;text-decoration:none;border:1px solid #3d5ea9;color:#fff}
     .stripe{background:#16b67f;border-color:#36e9ac;color:#04120d;font-weight:700}
     #updateBanner{position:fixed;right:14px;bottom:14px;background:#102a4a;border:1px solid #31d2ff;border-radius:12px;padding:12px;display:none}
-
-  <title>Rent Bots - RamIA</title>
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 0; background: #0b1020; color: #e9efff; }
-    .wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
-    .card { background: #141d3a; border: 1px solid #30416f; border-radius: 12px; padding: 18px; }
-    label { display: block; margin-top: 12px; color: #aac1ef; }
-    input { width: 100%; margin-top: 6px; padding: 10px; border-radius: 8px; border: 1px solid #3d5ca8; background: #0d1530; color: #e9efff; }
-    .btn { margin-top: 16px; padding: 10px 14px; border: 0; border-radius: 8px; background: #1177aa; color: #fff; cursor: pointer; }
-    .muted { color: #9db2df; }
-    code { background: #091027; padding: 2px 4px; border-radius: 4px; }
- main
   </style>
 </head>
 <body>
   <main class="wrap">
- codex/create-pwa-website-with-stripe-integration
     <section class="card">
       <h1>Rent Bots</h1>
       <p>Scale your operations instantly with RamIA bot leasing. Stripe handles checkout securely on hosted payment pages while your operational node remains under your local control.</p>
@@ -45,54 +32,8 @@
       <p><small>This website is informational; node runs locally.</small></p>
     </section>
   </main>
+
   <aside id="updateBanner"><strong>Update available.</strong><button id="updateBtn" class="btn">Reload</button></aside>
   <script src="/app.js"></script>
-
-    <h1>Rent Bots</h1>
-    <p class="muted">Fixed price: <strong>$1,000 USD per bot</strong>. Payment handled only by Stripe hosted Checkout.</p>
-    <section class="card">
-      <label>Renter ID
-        <input id="renter" placeholder="alice_team" maxlength="80" />
-      </label>
-      <label>Bots count
-        <input id="bots_count" type="number" min="1" value="1" />
-      </label>
-      <p class="muted">Total charge: <span id="total">$1,000</span>.</p>
-      <button class="btn" id="checkout">Proceed to Stripe Checkout</button>
-      <p id="status" class="muted"></p>
-    </section>
-    <p><a href="/">Back to home</a></p>
-  </main>
-  <script>
-    const renter = document.getElementById('renter');
-    const bots = document.getElementById('bots_count');
-    const total = document.getElementById('total');
-    const status = document.getElementById('status');
-    const checkout = document.getElementById('checkout');
-
-    function updateTotal() {
-      const n = Math.max(1, parseInt(bots.value || '1', 10));
-      total.textContent = `$${(n * 1000).toLocaleString()}`;
-    }
-    bots.addEventListener('input', updateTotal);
-    updateTotal();
-
-    checkout.onclick = async () => {
-      status.textContent = 'Creating checkout session...';
-      const payload = { renter: renter.value.trim(), bots_count: Math.max(1, parseInt(bots.value || '1', 10)) };
-      const res = await fetch('/.netlify/functions/create_checkout_session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (!res.ok || !data.checkout_url) {
-        status.textContent = data.error || 'Checkout failed.';
-        return;
-      }
-      location.href = data.checkout_url;
-    };
-  </script>
- main
 </body>
 </html>
