@@ -37,39 +37,40 @@
       <p>RamIA combines local node execution, AI-based anti-spam guardianship, and auditable bot leasing economics. Teams keep operational sovereignty while scaling automation for community support, moderation, and workflow orchestration.</p>
       <div class="cta">
         <a class="btn primary" href="https://github.com/RamIA/RamIA/releases/latest" target="_blank" rel="noopener">Download Software v1</a>
+ codex/update-old-stripe-link-to-new-url
  codex/create-pwa-website-with-stripe-integration
-        <a class="btn stripe" href="https://buy.stripe.com/dRm3cxaligqC6Kf99tdAk04" target="_blank" rel="noopener">Rent Bots — Pay with Stripe</a>
+        <a class="btn stripe" href="https://buy.stripe.com/6oUdRb652gqC7Oj0CXdAk05" target="_blank" rel="noopener">Rent Bots — Pay with Stripe</a>
 
         <a class="btn" href="/rent.html">Rent Bots</a>
         <a class="btn" href="/success.html">Payment Success Portal</a>
         <a class="btn" href="/cancel.html">Checkout Cancel</a>
+ main
+
+        <a class="btn stripe" href="https://buy.stripe.com/dRm3cxaligqC6Kf99tdAk04" target="_blank" rel="noopener">Rent Bots — Pay with Stripe</a>
+        <a class="btn" href="/security.html">Smart Contract Security</a>
  main
       </div>
     </section>
 
     <section class="grid">
       <article class="card"><h2>Why RamIA</h2><p>Most AI automation stacks force centralized data flow and recurring lock-in. RamIA keeps execution local, producing deterministic logs and policy controls suitable for high-trust operations.</p></article>
-      <article class="card"><h2>Architecture Overview</h2><p>Clients interact with a static web control surface while bot logic runs on local infrastructure. Transactional events, policy checks, and state changes are traceable for governance and debugging.</p></article>
       <article class="card"><h2>AI Guardian (Anti-Spam)</h2><p>Guardian rulesets classify abuse vectors, throttle harmful bursts, and isolate suspicious behavior before escalation. This reduces noise and protects operators from manipulation attacks.</p></article>
       <article class="card"><h2>Bot Leasing Model</h2><p>Teams can rent bot capacity through a hosted Stripe Payment Link. Access provisioning remains separate from card handling—payments are processed entirely by Stripe-hosted pages.</p></article>
       <article class="card"><h2>Roadmap</h2><ul><li>v1: Core local fleet runtime + web onboarding.</li><li>v1.1: Enhanced policy templates and fleet analytics.</li><li>v1.2: Security hardening playbooks for tokenized automations.</li></ul></article>
       <article class="card"><h2>FAQ</h2><h3>Is this a hosted node?</h3><p>No. This website is informational; node runs locally.</p><h3>Do you store payment secrets here?</h3><p>No. Stripe Payment Link checkout happens on Stripe domains, with no secret keys in this static site.</p></article>
     </section>
 
- codex/create-pwa-website-with-stripe-integration
-    <section class="card" style="margin-top:16px">
+    <section class="card" style="margin-top:16px;">
+      <h2>Architecture</h2>
+<pre>Rent page --(Stripe Payment Link)--> Stripe Checkout
+Stripe payment status + receipts managed on Stripe-hosted infrastructure
+User returns to RamIA resources --> local node onboarding and bot operations</pre>
+    </section>
+
+    <section class="card" style="margin-top:16px;">
       <h2>Smart Contract Security</h2>
       <p>Security posture matters for AI + blockchain workflows. Review our checklist-style guidance covering reentrancy defenses, permission boundaries, and oracle assumptions.</p>
       <a class="btn" href="/security.html">Open Security Checklist</a>
-
-    <section class="card" style="margin-top:16px;">
-      <h2>Architecture</h2>
-<pre>Rent page --(POST renter,bots_count)--> Netlify Function: create_checkout_session
-        <-- hosted Stripe URL --
-Stripe --(webhook)--> Netlify Function: stripe_webhook --> grant token store
-Browser success page --(session_id)--> Netlify Function: get_grant_token
-User copies grant token --> local RamIA endpoint /api/redeem_grant --> credits added</pre>
- main
     </section>
 
     <footer>RamIA website is informational; node runs locally. PWA caching uses network-first HTML updates to reduce stale content after deployments.</footer>

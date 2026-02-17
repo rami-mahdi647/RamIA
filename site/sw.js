@@ -9,8 +9,11 @@ const STATIC_ASSETS = [
   '/cancel.html',
   '/app.js',
   '/manifest.webmanifest',
+ codex/update-webmanifest-with-static-icons
   '/icons/icon-192.svg',
   '/icons/icon-512.svg'
+
+ main
 ];
 
 self.addEventListener('install', (event) => {
