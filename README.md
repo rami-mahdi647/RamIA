@@ -71,6 +71,7 @@ Set in Netlify UI (Site settings → Environment variables):
 - `SITE_URL`
 - Optional: `STRIPE_GRANT_SECRET` (recommended; if omitted webhook secret is reused)
 - Optional: `BOT_RENT_PRICE_USD` (defaults to `1000`)
+- Optional: `GRANT_FETCH_TTL_SECONDS` (defaults to `600`; short-lived retrieval window)
 
 ### Stripe webhook endpoint
 
@@ -83,8 +84,8 @@ Configure in Stripe Dashboard:
 ### Local node redeem flow
 
 1. Complete checkout on hosted Stripe page.
-2. Open `success.html?session_id=...`.
-3. Fetch grant token from `/.netlify/functions/get_grant_token`.
+2. Open `success.html?session_id=...&grant_key=...` (the full redirect URL from Stripe).
+3. Fetch grant token from `/.netlify/functions/get_grant_token` using both `session_id` and `grant_key` (delivered in the Stripe success URL).
 4. Call local endpoint:
 
 ```bash
@@ -99,4 +100,6 @@ curl -X POST http://127.0.0.1:8787/api/redeem_grant \
 - All secrets come from environment variables; do not hardcode keys.
 - Webhook signatures are verified before grant issuance.
 - Grant tokens are HMAC-signed and expire (`expires_ts`).
+- Grant retrieval now requires a second factor (`grant_key`) plus `session_id`.
+- Retrieval endpoint returns only `grant_token` and can invalidate the grant after first successful read (default behavior).
 - Local redemption validates token integrity and renter match before crediting.
