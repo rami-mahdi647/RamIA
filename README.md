@@ -104,7 +104,6 @@ cd RamIA
 npm install
 ```
 
- codex/update-readme-for-technical-users-2fh7rb
 ---
 
 ## Platform setup
@@ -119,7 +118,6 @@ sudo apt update
 sudo apt install -y git python3 python3-venv python3-pip nodejs npm
 ```
 
- codex/update-readme-for-technical-users-2fh7rb
 Then run:
 
 ```bash
@@ -198,7 +196,6 @@ python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web
 ```bash
 python3 tokenomics_v1.py --self-test
 ```
- main
 
 ```bash
 git clone <REPO_URL>
@@ -206,7 +203,6 @@ cd RamIA
 npm install
 ```
 
- codex/update-readme-for-technical-users-2fh7rb
 3) Start local runtime:
 
 ```bash
@@ -360,7 +356,6 @@ Endpoint expuesto por `ramia_core_plus.py`:
 - `POST /api/redeem_grant`
 
 Payload:
- main
 
 ```json
 {
@@ -369,11 +364,9 @@ Payload:
 }
 ```
 
- codex/update-readme-for-technical-users-2fh7rb
 Example request:
 
 Ejemplo:
- main
 
 ```bash
 curl -X POST http://127.0.0.1:8787/api/redeem_grant \
@@ -383,7 +376,6 @@ curl -X POST http://127.0.0.1:8787/api/redeem_grant \
 
 ---
 
- codex/update-readme-for-technical-users-2fh7rb
 ## Minimal terminal verification
 
 Run these after setup:
@@ -454,4 +446,3 @@ python3 ramia_core_plus.py --guardian-model ./guardian_model.json --web --web-po
 ```
 
 Si necesitas un README adicional orientado a contribución (estilo `CONTRIBUTING.md`) con estándares de commits, release y CI, créalo separado de este README técnico.
- main
