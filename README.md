@@ -277,7 +277,6 @@ When the runtime is started with web enabled, it exposes:
 - `POST /api/redeem_grant`
 
 Request body:
-=======
 ## Windows (PowerShell)
 
 ### Opción A (nativa)
