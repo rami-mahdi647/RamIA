@@ -1,4 +1,5 @@
 const Stripe = require("stripe");
+const crypto = require("crypto");
 
 function parseBody(event) {
   if (!event.body) return {};
@@ -13,6 +14,10 @@ function toPositiveInt(value, fallback) {
   const n = Number.parseInt(String(value), 10);
   if (!Number.isFinite(n) || n <= 0) return fallback;
   return n;
+}
+
+function sha256Hex(value) {
+  return crypto.createHash("sha256").update(value).digest("hex");
 }
 
 exports.handler = async (event) => {
@@ -34,6 +39,8 @@ exports.handler = async (event) => {
 
     const pricePerBotUsd = toPositiveInt(process.env.BOT_RENT_PRICE_USD || "1000", 1000);
     const unitAmount = pricePerBotUsd * 100 * botsCount;
+    const grantLookupKey = crypto.randomBytes(18).toString("base64url");
+    const grantLookupHash = sha256Hex(grantLookupKey);
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
     const session = await stripe.checkout.sessions.create({
@@ -55,8 +62,9 @@ exports.handler = async (event) => {
         renter,
         bots_count: String(botsCount),
         purpose: "bot_rent_v1",
+        grant_key_hash: grantLookupHash,
       },
-      success_url: `${siteUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${siteUrl}/success.html?session_id={CHECKOUT_SESSION_ID}&grant_key=${encodeURIComponent(grantLookupKey)}`,
       cancel_url: `${siteUrl}/cancel.html`,
     });
 

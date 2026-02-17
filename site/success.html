@@ -9,12 +9,24 @@
 <script>
 const params = new URLSearchParams(location.search);
 const sid = params.get('session_id');
+const grantKey = params.get('grant_key');
 const out = document.getElementById('token');
 document.getElementById('load').onclick = async () => {
   if (!sid) { out.value = 'Missing session_id in URL.'; return; }
-  const res = await fetch(`/.netlify/functions/get_grant_token?session_id=${encodeURIComponent(sid)}`);
+  if (!grantKey) { out.value = 'Missing grant_key in URL. Re-open the Stripe success link.'; return; }
+
+  const query = new URLSearchParams({ session_id: sid, grant_key: grantKey });
+  const res = await fetch(`/.netlify/functions/get_grant_token?${query.toString()}`);
   const data = await res.json();
-  out.value = data.grant_token || JSON.stringify(data, null, 2);
+
+  if (!res.ok) {
+    if (res.status === 403) out.value = 'Authorization failed: invalid retrieval key.';
+    else if (res.status === 410) out.value = 'Grant token is no longer available (expired or already read).';
+    else out.value = data.error || `Error (${res.status})`;
+    return;
+  }
+
+  out.value = data.grant_token || 'Grant token missing in response.';
 };
 </script>
 </body></html>

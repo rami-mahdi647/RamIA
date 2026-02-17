@@ -11,25 +11,43 @@ async function getBlobStore() {
   return null;
 }
 
+function readFallbackFile() {
+  if (!fs.existsSync(FALLBACK_FILE)) return {};
+  return JSON.parse(fs.readFileSync(FALLBACK_FILE, "utf8"));
+}
+
+function writeFallbackFile(data) {
+  fs.writeFileSync(FALLBACK_FILE, JSON.stringify(data, null, 2));
+}
+
 async function saveGrant(sessionId, grantRecord) {
   const store = await getBlobStore();
   if (store) {
     await store.setJSON(sessionId, grantRecord);
     return;
   }
-  const existing = fs.existsSync(FALLBACK_FILE)
-    ? JSON.parse(fs.readFileSync(FALLBACK_FILE, "utf8"))
-    : {};
+  const existing = readFallbackFile();
   existing[sessionId] = grantRecord;
-  fs.writeFileSync(FALLBACK_FILE, JSON.stringify(existing, null, 2));
+  writeFallbackFile(existing);
 }
 
 async function getGrant(sessionId) {
   const store = await getBlobStore();
   if (store) return await store.get(sessionId, { type: "json" });
-  if (!fs.existsSync(FALLBACK_FILE)) return null;
-  const existing = JSON.parse(fs.readFileSync(FALLBACK_FILE, "utf8"));
+  const existing = readFallbackFile();
   return existing[sessionId] || null;
 }
 
-module.exports = { saveGrant, getGrant };
+async function deleteGrant(sessionId) {
+  const store = await getBlobStore();
+  if (store && typeof store.delete === "function") {
+    await store.delete(sessionId);
+    return;
+  }
+  const existing = readFallbackFile();
+  if (!(sessionId in existing)) return;
+  delete existing[sessionId];
+  writeFallbackFile(existing);
+}
+
+module.exports = { saveGrant, getGrant, deleteGrant };

@@ -41,6 +41,8 @@ exports.handler = async (event) => {
       const now = Math.floor(Date.now() / 1000);
       const creditsToAdd = botsCount;
       const expiresTs = now + (30 * 24 * 3600);
+      const grantFetchTtlSeconds = Math.max(60, Number.parseInt(process.env.GRANT_FETCH_TTL_SECONDS || "600", 10));
+      const fetchExpiresTs = now + grantFetchTtlSeconds;
 
       const payload = {
         jti: crypto.randomUUID(),
@@ -56,11 +58,8 @@ exports.handler = async (event) => {
 
       await saveGrant(session.id, {
         grant_token: grantToken,
-        renter,
-        bots_count: botsCount,
-        credits_to_add: creditsToAdd,
-        expires_ts: expiresTs,
-        paid_at: now,
+        grant_key_hash: String(md.grant_key_hash || ""),
+        fetch_expires_ts: fetchExpiresTs,
       });
     }
 
