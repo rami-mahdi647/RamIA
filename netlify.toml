@@ -1,6 +1,5 @@
 [build]
   publish = "site"
-  command = ""
 
 [[redirects]]
   from = "/rent"
