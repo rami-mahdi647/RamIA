@@ -366,6 +366,60 @@ $env:STRIPE_WEBHOOK_SECRET='whsec_xxx'
 $env:SITE_URL='https://tu-dominio-o-netlify.app'
 ```
 
+### Webhook Python (wallet + asignación automática de bots)
+
+Nuevo servicio: `stripe_webhook.py`.
+
+Variables adicionales:
+
+- `WALLET_ENCRYPTION_PASSPHRASE` (obligatoria, mínimo 16 caracteres)
+- `WEBHOOK_DB_PATH` (opcional; default `./data/stripe_webhook.sqlite3`)
+- `PORT` (opcional; default `8000`)
+
+Ejemplo Linux/macOS:
+
+```bash
+export STRIPE_SECRET_KEY='sk_test_xxx'
+export STRIPE_WEBHOOK_SECRET='whsec_xxx'
+export WALLET_ENCRYPTION_PASSPHRASE='frase-larga-solo-servidor'
+export WEBHOOK_DB_PATH='./data/stripe_webhook.sqlite3'
+python3 stripe_webhook.py
+```
+
+El webhook `POST /webhook` valida firma Stripe, procesa solo `checkout.session.completed`, crea wallet cifrada para el usuario (si no existe), y asigna créditos de bots en SQLite. Nunca devuelve ni registra la private key en texto plano.
+
+### Prueba local con Stripe CLI (`checkout.session.completed`)
+
+1. Arranca el webhook local:
+
+```bash
+python3 stripe_webhook.py
+```
+
+2. En otra terminal, reenvía eventos de Stripe al webhook local:
+
+```bash
+stripe listen --forward-to localhost:8000/webhook
+```
+
+3. Copia el `whsec_...` mostrado por Stripe CLI y úsalo en `STRIPE_WEBHOOK_SECRET`.
+
+4. Dispara un evento de prueba con metadata (user y bots):
+
+```bash
+stripe trigger checkout.session.completed   --add checkout_session:metadata.user_id=user_demo_001   --add checkout_session:metadata.bots_purchased=3
+```
+
+5. Verifica asignación y wallet pública en SQLite:
+
+```bash
+sqlite3 ./data/stripe_webhook.sqlite3 "SELECT user_id,address,curve FROM user_wallets;"
+sqlite3 ./data/stripe_webhook.sqlite3 "SELECT user_id,wallet_address,credits,stripe_event_id FROM user_bot_assignments;"
+```
+
+6. Repite el mismo evento para verificar idempotencia: no debe duplicar `processed_events` para el mismo `stripe_event_id`.
+
+
 ---
 
 ## 7) API local de canje de grant
