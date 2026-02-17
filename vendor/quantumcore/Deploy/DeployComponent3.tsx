@@ -1,0 +1,1 @@
+export default function DeployComponent3() { return <div>Deploy Component 3</div>; }

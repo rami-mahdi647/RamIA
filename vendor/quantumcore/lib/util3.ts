@@ -1,0 +1,1 @@
+export function util3() { return 'Util 3 funcionando'; }

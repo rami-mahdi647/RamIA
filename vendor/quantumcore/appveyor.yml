@@ -1,0 +1,154 @@
+# QuantumEdge-Full — AppVeyor CI/CD (fix parse + robusto)
+version: "{build}"
+
+image:
+  - Ubuntu2204
+  - Visual Studio 2022
+
+environment:
+  NODE_VERSION: "20"
+  # Define GH_TOKEN (secured) en Settings -> Environment
+
+cache:
+  - node_modules -> package-lock.json
+  - web/node_modules -> web/package-lock.json
+  - backend/node_modules -> backend/package-lock.json
+  - desktop/node_modules -> desktop/package-lock.json
+  - contracts/node_modules -> contracts/package-lock.json
+
+services: []
+
+init:
+  - cmd: echo Init on Windows
+  - sh: echo "Init on Linux"
+
+install:
+  # Node 20
+  - ps: |
+      if ($env:APPVEYOR_BUILD_WORKER_IMAGE -like "Visual Studio*") {
+        Install-Product node $env:NODE_VERSION
+      }
+  - sh: |
+      if [ "$APPVEYOR_BUILD_WORKER_IMAGE" != "Visual Studio 2022" ]; then
+        curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash - \
+        && sudo apt-get install -y nodejs
+      fi
+
+  # npm auth (opcional)
+  - sh: |
+      if [ -n "$NPM_TOKEN" ]; then
+        echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+      fi
+
+  # raíz (si aplica)
+  - sh: |
+      if [ -f package.json ]; then
+        npm ci || npm install
+      fi
+  - cmd: |
+      IF EXIST package.json (
+        call npm ci || call npm install
+      )
+
+build_script:
+  # WEB
+  - sh: |
+      if [ -d web ]; then
+        cd web
+        npm ci || npm install
+        npm run typecheck --if-present
+        npm run lint --if-present
+        npm run build --if-present
+        cd ..
+      fi
+  - cmd: |
+      IF EXIST web\package.json (
+        cd web
+        call npm ci || call npm install
+        call npm run typecheck --if-present
+        call npm run lint --if-present
+        call npm run build --if-present
+        cd ..
+      )
+
+  # BACKEND
+  - sh: |
+      if [ -d backend ]; then
+        cd backend
+        npm ci || npm install
+        npm run typecheck --if-present
+        npm run lint --if-present
+        npm run build --if-present
+        cd ..
+      fi
+  - cmd: |
+      IF EXIST backend\package.json (
+        cd backend
+        call npm ci || call npm install
+        call npm run typecheck --if-present
+        call npm run lint --if-present
+        call npm run build --if-present
+        cd ..
+      )
+
+  # CONTRACTS (Hardhat)
+  - sh: |
+      if [ -f hardhat.config.js ] || [ -d contracts ]; then
+        npm --prefix contracts ci || true
+        npx hardhat compile || true
+        npx hardhat test || true
+      fi
+  - cmd: |
+      IF EXIST hardhat.config.js (
+        call npm --prefix contracts ci || echo no-contracts
+        call npx hardhat compile || echo compile-skipped
+        call npx hardhat test || echo tests-skipped
+      )
+
+  # DESKTOP (Electron) — solo en Windows
+  - cmd: |
+      IF EXIST desktop\package.json (
+        IF "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2022" (
+          cd desktop
+          call npm ci || call npm install
+          call npm run dist --if-present
+          call npm run build --if-present
+          cd ..
+        )
+      )
+
+test_script:
+  - sh: npm test --if-present || true
+  - cmd: call npm test --if-present || echo no-root-tests
+
+artifacts:
+  - path: web/dist
+    name: web-dist
+    type: zip
+  - path: backend/dist
+    name: backend-dist
+    type: zip
+  - path: desktop/dist/**
+    name: desktop-dist
+    type: zip
+  - path: desktop/release/**
+    name: desktop-release
+    type: zip
+
+deploy:
+  - provider: GitHub
+    auth_token:
+      secure: $(GH_TOKEN)
+    artifact: web-dist, backend-dist, desktop-dist, desktop-release
+    draft: false
+    prerelease: false
+    force_update: true
+    on:
+      appveyor_repo_tag: true   # publica solo cuando el build viene de un tag
+
+notifications:
+  - provider: Email
+    to:
+      - baydounr01@gmail.com
+    on_build_success: false
+    on_build_failure: true

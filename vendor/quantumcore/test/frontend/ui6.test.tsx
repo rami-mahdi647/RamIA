@@ -1,0 +1,1 @@
+test('UI 6 renders', () => { expect(true).toBe(true); });

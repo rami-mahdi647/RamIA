@@ -1,0 +1,1 @@
+export function util16() { return 'Util 16 funcionando'; }

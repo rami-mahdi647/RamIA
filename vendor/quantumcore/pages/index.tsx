@@ -1,0 +1,1 @@
+export default function Home() { return <div>QuantumEdge Enterprise Full UI cargada</div>; }

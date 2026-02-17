@@ -1,0 +1,1 @@
+export default function AIAASComponent3() { return <div>AIAAS Component 3</div>; }

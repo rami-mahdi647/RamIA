@@ -1,0 +1,17 @@
+{
+  "ciphertext": "LRUR24DkwyOrjuX911UaiO0yGxpM4eLtHHEnxWDeYsd9h_C0Od8S4sksjuQ7Wlsa87mYDrKadOHtRn3rmJO81_Fnfyvi_bz32BZTOdWa3qThnpiiSv4VYcZBwK-Mwo03AyK2EeF2Y_TroiW7zimDJ5A8MuKTkUfN7bhz34YRD7z6iPw3ti-osI1-DxSG0FJgUe88p1Tr_Ud_GC98ze-aLHmFBbW-HCc494WVzZbvzHx29hf-5FtrR3rIdRyIuXxLCj4",
+  "header": {
+    "format": "ramia_wallet_secure",
+    "kdf": "scrypt",
+    "kdf_params": {
+      "dklen": 64,
+      "n": 16384,
+      "p": 1,
+      "r": 8
+    },
+    "nonce": "gP_a6nsAq5piSbXk89PTrw",
+    "salt": "ZwiaQ4OOR3s-ZOP7kYNRaw",
+    "version": 1
+  },
+  "tag": "YAqPB9-3TEitT9yyVTJikAjCktkccSMc2Tt6Br18x7M"
+}
