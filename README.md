@@ -270,6 +270,26 @@ Useful flags:
 - `--web-port <port>`: bind port (default commonly `8787`).
 - `--conf <path>`: use custom runtime config file.
 
+
+## Static dashboard pages must be served over HTTP
+
+Do **not** open dashboard/site HTML files by double-clicking (`file://...`). Always use an HTTP URL such as `http://localhost:...` or your deployed host so hosted-relative links and function routes resolve correctly.
+
+Recommended local options from repo root:
+
+```bash
+npx netlify dev
+# open http://localhost:8888/
+```
+
+For static-only checks:
+
+```bash
+cd site
+python3 -m http.server 8080
+# open http://localhost:8080/
+```
+
 ## Local endpoint contract
 
 When the runtime is started with web enabled, it exposes:
