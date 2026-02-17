@@ -6,9 +6,9 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
-import json
 import os
 import time
+import json
 from typing import Any, Dict
 
 
@@ -68,3 +68,40 @@ def apply_credit_to_market(core_market: Any, renter: str, credits_to_add: int) -
         "credited": int(credits_to_add),
         "credits_total": int(core_market.state["credits"].get(renter, 0)),
     }
+
+
+def redeem_grant_token(ctxp: Any, token: str, expected_renter: str | None = None) -> tuple[bool, Dict[str, Any]]:
+    try:
+        payload = verify_grant_token(token)
+    except Exception as exc:
+        return False, {"ok": False, "error": str(exc)}
+
+    renter = payload["renter"]
+    if expected_renter is not None and renter != expected_renter:
+        return False, {"ok": False, "error": "renter_mismatch"}
+
+    grant_id = str(payload.get("jti") or payload.get("session_id") or "").strip()
+    if not grant_id:
+        return False, {"ok": False, "error": "missing_grant_id"}
+
+    redeemed = ctxp.core.market.state.setdefault("redeemed_grants", {})
+    if grant_id in redeemed:
+        return False, {"ok": False, "error": "grant_already_redeemed", "grant_id": grant_id}
+
+    out = apply_credit_to_market(ctxp.core.market, renter, payload["credits_to_add"])
+    redeemed[grant_id] = int(time.time())
+
+    ctxp.core.audit.append(
+        {
+            "type": "stripe_grant_redeem_v1",
+            "renter": renter,
+            "credits": payload["credits_to_add"],
+            "bots_count": payload["bots_count"],
+            "session_id": payload.get("session_id", "unknown"),
+            "jti": payload.get("jti"),
+            "grant_id": grant_id,
+        }
+    )
+    ctxp.core.save()
+    out["grant_id"] = grant_id
+    return True, out
