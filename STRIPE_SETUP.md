@@ -31,8 +31,13 @@ Set in Netlify site settings (Build & deploy → Environment):
 1. Set all env vars to test keys/secrets.
 2. Trigger checkout via your app (or `/.netlify/functions/create_checkout_session` POST).
 3. Complete payment with Stripe test card.
-4. Open `/success.html?session_id=<id>` and load the grant token.
+4. Open `http://localhost:8888/success.html?session_id=<id>&grant_key=<temp_key>` (or your deployed host URL) and load the grant token. Do not open HTML files directly via `file://...`.
 5. Redeem token on local RamIA node endpoint `POST /api/redeem_grant` using JSON body `{"renter":"alice","token":"<grant_token>"}`.
+
+Use HTTP serving for static pages:
+
+- Netlify local stack: `npx netlify dev` from repo root (`http://localhost:8888/...`).
+- Static-only checks: `cd site && python3 -m http.server 8080` (`http://localhost:8080/...`).
 
 ## API contract
 
@@ -43,7 +48,7 @@ Use a single redemption contract across docs/UI/backend:
 - **Success JSON**: `ok`, `renter`, `credited`, `credits_total`
 - **Error JSON**: `ok=false` with `error` code
 
-4. Open the full redirect URL: `/success.html?session_id=<id>&grant_key=<temp_key>`.
+4. Open the full hosted redirect URL, for example: `http://localhost:8888/success.html?session_id=<id>&grant_key=<temp_key>` or `https://<your-site>.netlify.app/success.html?session_id=<id>&grant_key=<temp_key>`.
 5. Call `/.netlify/functions/get_grant_token?session_id=<id>&grant_key=<temp_key>`.
 6. Endpoint returns only `{ "grant_token": "..." }` and invalidates the grant after the first successful read by default.
-7. Redeem token on local RamIA node endpoint `/api/redeem_grant_token`.
+7. Redeem token on local RamIA node endpoint `POST /api/redeem_grant`.

@@ -46,6 +46,16 @@ export GRANT_FETCH_TTL_SECONDS=600
 npx netlify dev
 ```
 
+> Important: always load dashboard/static pages through `http://localhost:...` (or your deployed host). Never open HTML files by double-clicking (`file://...`) because function routes and hosted-relative links are designed for HTTP serving.
+
+For static-only checks (without functions), serve the `site/` folder over HTTP:
+
+```bash
+cd site
+python3 -m http.server 8080
+# then open http://localhost:8080/
+```
+
 ## 7) Retrieve + redeem grant token in local node
 
 1. Complete checkout and keep the full success URL (it now includes `session_id` + `grant_key`).
