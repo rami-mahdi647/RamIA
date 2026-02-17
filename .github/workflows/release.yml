@@ -1,55 +1,42 @@
-name: Release Software v1
+name: release-binaries
 
 on:
   push:
     tags:
-      - "v*.*.*"
+      - 'v*.*.*'
 
 permissions:
   contents: write
 
 jobs:
   build:
-    name: Build ${{ matrix.os }} binary
-    runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
+      - name: Build binary
+        run: pyinstaller --onefile ramia_core_plus.py --name ramia-core-plus
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ramia-core-plus-${{ matrix.os }}
+          path: dist/*
 
-      - name: Install build deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install pyinstaller cryptography
-
-      - name: Build Software v1
-        shell: bash
-        env:
-          DATA_SEP: ${{ matrix.os == 'windows-latest' && ';' || ':' }}
-        run: |
-          pyinstaller --noconfirm --onefile --name Software-v1 \
-            --add-data "ui_plus.html${DATA_SEP}." \
-            --add-data "configs${DATA_SEP}configs" \
-            ramia_core.py
-
-      - name: Archive binary
-        shell: bash
-        run: |
-          mkdir -p release
-          EXT=""
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then EXT=".exe"; fi
-          cp "dist/Software-v1${EXT}" "release/Software-v1-${{ matrix.os }}${EXT}"
-
-      - name: Upload release asset
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Publish release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: release/*
+          files: artifacts/**

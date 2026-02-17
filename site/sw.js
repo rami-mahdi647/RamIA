@@ -1,8 +1,9 @@
-const CACHE_VERSION = "ramia-v1.0.0";
+const CACHE_VERSION = "ramia-v1.1.0";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const STATIC_ASSETS = [
   "/",
   "/index.html",
+  "/rent.html",
   "/success.html",
   "/cancel.html",
   "/app.js",

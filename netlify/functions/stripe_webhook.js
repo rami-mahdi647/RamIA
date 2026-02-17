@@ -21,36 +21,45 @@ exports.handler = async (event) => {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     const grantSecret = process.env.STRIPE_GRANT_SECRET || webhookSecret;
     if (!stripeKey || !webhookSecret || !grantSecret) {
-      return { statusCode: 500, body: "Missing Stripe configuration" };
+      return { statusCode: 500, body: "missing_stripe_env" };
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
-    const signature = event.headers["stripe-signature"] || event.headers["Stripe-Signature"];
+    const sig = event.headers["stripe-signature"] || event.headers["Stripe-Signature"];
     const body = event.isBase64Encoded ? Buffer.from(event.body || "", "base64").toString("utf8") : (event.body || "");
-    const stripeEvent = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    const stripeEvent = stripe.webhooks.constructEvent(body, sig, webhookSecret);
 
     if (stripeEvent.type === "checkout.session.completed") {
       const session = stripeEvent.data.object;
       const md = session.metadata || {};
-      const renter = String(md.renter || "");
-      const credits = Math.max(1, Number.parseInt(md.credits || "0", 10));
-      const durationSec = Math.max(60, Number.parseInt(md.duration || "3600", 10));
+      if (String(md.purpose || "") !== "bot_rent_v1") {
+        return { statusCode: 200, body: JSON.stringify({ received: true, ignored: "purpose_mismatch" }) };
+      }
+
+      const renter = String(md.renter || "").trim();
+      const botsCount = Math.max(1, Number.parseInt(md.bots_count || "1", 10));
       const now = Math.floor(Date.now() / 1000);
+      const creditsToAdd = botsCount;
+      const expiresTs = now + (30 * 24 * 3600);
+
       const payload = {
         jti: crypto.randomUUID(),
         session_id: session.id,
         renter,
-        tier: String(md.tier || "Silver"),
-        credits,
+        bots_count: botsCount,
+        credits_to_add: creditsToAdd,
+        purpose: "bot_rent_v1",
         iat: now,
-        expires_at: now + durationSec,
+        expires_ts: expiresTs,
       };
       const grantToken = signGrant(payload, grantSecret);
+
       await saveGrant(session.id, {
         grant_token: grantToken,
         renter,
-        credits,
-        expires_at: payload.expires_at,
+        bots_count: botsCount,
+        credits_to_add: creditsToAdd,
+        expires_ts: expiresTs,
         paid_at: now,
       });
     }

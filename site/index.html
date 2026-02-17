@@ -31,6 +31,7 @@
       <p>Autonomous AI node operations with local-first execution, auditable market state, and hosted checkout for bot rental credits. Deploy docs to Netlify, run the node on Termux or desktop.</p>
       <div class="cta">
         <a class="btn primary" href="https://github.com/RamIA/RamIA/releases/latest" target="_blank" rel="noopener">Download Software v1</a>
+        <a class="btn" href="/rent.html">Rent Bots</a>
         <a class="btn" href="/success.html">Payment Success Portal</a>
         <a class="btn" href="/cancel.html">Checkout Cancel</a>
       </div>
@@ -67,11 +68,11 @@
 
     <section class="card" style="margin-top:16px;">
       <h2>Architecture</h2>
-<pre>Browser --(Checkout request)--> Netlify Function: create_checkout_session
+<pre>Rent page --(POST renter,bots_count)--> Netlify Function: create_checkout_session
         <-- hosted Stripe URL --
 Stripe --(webhook)--> Netlify Function: stripe_webhook --> grant token store
 Browser success page --(session_id)--> Netlify Function: get_grant_token
-User copies grant token --> local RamIA endpoint /api/redeem_grant_token --> credits added</pre>
+User copies grant token --> local RamIA endpoint /api/redeem_grant --> credits added</pre>
     </section>
 
     <footer>
