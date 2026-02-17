@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RamIA Production v1 — Local-First AI Node Marketplace</title>
+  <meta name="description" content="RamIA Production v1: local-first AI node with marketplace credits, secure audit trails, downloadable binaries, and Stripe-powered bot rental checkout." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0a0f1f" />
+  <style>
+    :root { color-scheme: dark; --bg:#070b17; --card:#121a31; --ink:#ecf2ff; --muted:#9db0d3; --accent:#36d6ff; --ok:#35e88e; }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,sans-serif; background:linear-gradient(180deg,#070b17,#0e1630); color:var(--ink); }
+    .wrap { max-width:1040px; margin:0 auto; padding:24px; }
+    .hero { padding:28px; border:1px solid #2b3b6d; border-radius:18px; background:rgba(18,26,49,.72); }
+    h1 { margin-top:0; font-size:2rem; }
+    p,li { color:var(--muted); line-height:1.5; }
+    .cta { display:flex; gap:12px; flex-wrap:wrap; margin:16px 0; }
+    .btn { text-decoration:none; border:1px solid #3f5eaf; color:var(--ink); padding:10px 14px; border-radius:10px; background:#13234b; }
+    .btn.primary { background:#0a5d7f; border-color:#36d6ff; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-top:18px; }
+    .card { border:1px solid #23345f; background:var(--card); border-radius:14px; padding:16px; }
+    pre { background:#0b1226; border:1px solid #1e2c52; color:#cde0ff; padding:12px; border-radius:10px; overflow:auto; }
+    footer { margin:22px 0; color:#87a0ce; font-size:.9rem; }
+    #updateBanner { position:fixed; bottom:14px; right:14px; display:none; background:#13395f; border:1px solid #36d6ff; border-radius:12px; padding:12px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>RamIA Production v1</h1>
+      <p>Autonomous AI node operations with local-first execution, auditable market state, and hosted checkout for bot rental credits. Deploy docs to Netlify, run the node on Termux or desktop.</p>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/RamIA/RamIA/releases/latest" target="_blank" rel="noopener">Download Software v1</a>
+        <a class="btn" href="/success.html">Payment Success Portal</a>
+        <a class="btn" href="/cancel.html">Checkout Cancel</a>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Core Stack</h2>
+        <ul>
+          <li>Local node runtime (Python, no cloud lock-in).</li>
+          <li>AI Fleet + Guardian screening workflow.</li>
+          <li>Marketplace credits with signed audit trails.</li>
+          <li>Stripe Checkout + webhook grant token flow.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h2>Security & Privacy</h2>
+        <ul>
+          <li>No card data handled by RamIA (Stripe-hosted checkout only).</li>
+          <li>Webhook signature verification on Netlify Functions.</li>
+          <li>HMAC-signed grant token redeemed locally.</li>
+          <li>Secrets only from environment variables.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h2>Roadmap</h2>
+        <ul>
+          <li>v1: Cross-platform binaries + production docs site.</li>
+          <li>v1.1: Expanded tenant controls and reporting.</li>
+          <li>v1.2: Optional hardware-backed signing integration.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="card" style="margin-top:16px;">
+      <h2>Architecture</h2>
+<pre>Browser --(Checkout request)--> Netlify Function: create_checkout_session
+        <-- hosted Stripe URL --
+Stripe --(webhook)--> Netlify Function: stripe_webhook --> grant token store
+Browser success page --(session_id)--> Netlify Function: get_grant_token
+User copies grant token --> local RamIA endpoint /api/redeem_grant_token --> credits added</pre>
+    </section>
+
+    <footer>
+      Production v1 static app • PWA-enabled with reliable update button and versioned cache.
+    </footer>
+  </main>
+
+  <aside id="updateBanner">
+    <strong>Update available</strong>
+    <button id="updateBtn" class="btn primary" style="margin-left:8px;">Refresh now</button>
+  </aside>
+
+  <script src="/app.js"></script>
+</body>
+</html>

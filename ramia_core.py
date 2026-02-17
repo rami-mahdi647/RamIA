@@ -1,7 +1,19 @@
 #!/usr/bin/env python3
+"""RamIA Production entrypoint with Stripe grant redemption endpoint.
+
+This file extends aicore_plus behavior without editing existing core files.
+"""
+
 import argparse
+import json
 import os
+import socketserver
 import sys
+from http.server import BaseHTTPRequestHandler
+
+import aicore_plus
+import stripe_bridge
+
 
 def parse_conf(path: str):
     cfg = {}
@@ -17,17 +29,48 @@ def parse_conf(path: str):
                 cfg[k.strip()] = v.strip()
     return cfg
 
+
 def as_int(cfg, k, default):
-    try: return int(cfg.get(k, default))
-    except: return default
+    try:
+        return int(cfg.get(k, default))
+    except Exception:
+        return default
+
 
 def as_float(cfg, k, default):
-    try: return float(cfg.get(k, default))
-    except: return default
+    try:
+        return float(cfg.get(k, default))
+    except Exception:
+        return default
+
 
 def as_bool(cfg, k, default):
     v = str(cfg.get(k, "1" if default else "0")).lower()
-    return v in ("1","true","yes","on")
+    return v in ("1", "true", "yes", "on")
+
+
+class ExtendedHandler(aicore_plus.LocalHandlerPlus):
+    def route(self, path, data):
+        if path == "/api/redeem_grant_token":
+            token = str(data.get("grant_token", "")).strip()
+            if not token:
+                return {"ok": False, "error": "missing_grant_token"}
+            ok, out = stripe_bridge.redeem_grant_token(self.ctxp, token)
+            return out if ok else out
+        return super().route(path, data)
+
+
+def run_web_with_stripe(ctxp: aicore_plus.AppContextPlus, ui_html: str, host: str, port: int):
+    class ThreadingHTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+        allow_reuse_address = True
+
+    ExtendedHandler.ctxp = ctxp
+    ExtendedHandler.ui_html = ui_html
+    httpd = ThreadingHTTPServer((host, port), ExtendedHandler)
+    print(f"[ramia-core] web=http://{host}:{port}")
+    print("[ramia-core] extra endpoint: POST /api/redeem_grant_token")
+    httpd.serve_forever()
+
 
 def main():
     p = argparse.ArgumentParser(prog="ramia-core")
@@ -41,7 +84,6 @@ def main():
     args = p.parse_args()
 
     cfg = parse_conf(args.conf)
-
     guardian_model = args.guardian_model or cfg.get("guardian_model") or "./guardian_model.json"
     datadir = args.datadir or cfg.get("datadir") or "./aichain_data"
     threshold = as_float(cfg, "threshold", 0.70)
@@ -52,56 +94,46 @@ def main():
     fleet_seed = as_int(cfg, "fleet_seed", 1337)
 
     wallet_file = cfg.get("wallet_file", "./wallet.json")
-    ui_file = cfg.get("ui_file", "./coreui/ui_plus.html")
+    ui_file = cfg.get("ui_file", "./ui_plus.html")
 
     web_enabled = as_bool(cfg, "web", True)
-    if args.web: web_enabled = True
-    if args.no_web: web_enabled = False
+    if args.web:
+        web_enabled = True
+    if args.no_web:
+        web_enabled = False
     web_host = args.web_host or cfg.get("web_host", "127.0.0.1")
     web_port = args.web_port or as_int(cfg, "web_port", 8787)
-
-    # Import here to fail fast if missing
-    import aicore_plus
 
     core_args = argparse.Namespace(
         datadir=datadir,
         guardian_model=guardian_model,
         threshold=threshold,
         privacy_mode=privacy_mode,
-
-        fleet_state=cfg.get("fleet_state","./fleet_state.json"),
+        fleet_state=cfg.get("fleet_state", "./fleet_state.json"),
         fleet_size=fleet_size,
         fleet_seed=fleet_seed,
         committee_size=committee_size,
-
-        burst_state=cfg.get("burst_state","./burst_state.json"),
-        burst_window=as_int(cfg,"burst_window",60),
-        burst_max=as_int(cfg,"burst_max",10),
-
-        market_state=cfg.get("market_state","./market_secure_state.bin"),
-        secret_file=cfg.get("secret_file","./market_secret.key"),
-        audit_log=cfg.get("audit_log","./audit_log.jsonl"),
+        burst_state=cfg.get("burst_state", "./burst_state.json"),
+        burst_window=as_int(cfg, "burst_window", 60),
+        burst_max=as_int(cfg, "burst_max", 10),
+        market_state=cfg.get("market_state", "./market_secure_state.bin"),
+        secret_file=cfg.get("secret_file", "./market_secret.key"),
+        audit_log=cfg.get("audit_log", "./audit_log.jsonl"),
     )
 
     ctxp = aicore_plus.AppContextPlus(core_args, wallet_file=wallet_file)
 
-    # UI file
     if not os.path.exists(ui_file):
         print(f"[fatal] ui file not found: {ui_file}", file=sys.stderr)
-        print("Hint: put ui_plus.html in ./coreui/ui_plus.html or set ui_file= in ramia.conf", file=sys.stderr)
         sys.exit(2)
 
     html = aicore_plus.load_ui_html(ui_file)
-
     if not web_enabled:
         print("[node] web disabled by config.")
-        print("[node] This runner currently focuses on Web UI. Use CLI commands via aicore/aicore_plus.")
         sys.exit(0)
 
-    print(f"[ramia-core] datadir={datadir}")
-    print(f"[ramia-core] guardian_model={guardian_model}")
-    print(f"[ramia-core] web=http://{web_host}:{web_port}")
-    aicore_plus.run_web_plus(ctxp, html, web_host, web_port)
+    run_web_with_stripe(ctxp, html, web_host, web_port)
+
 
 if __name__ == "__main__":
     main()

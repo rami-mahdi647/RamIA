@@ -1,47 +1,55 @@
-const CACHE = "ramia-cache-v1"; // sube a v2, v3... cuando quieras forzar update
-const ASSETS = ["/", "/index.html", "/app.js", "/manifest.webmanifest"];
+const CACHE_VERSION = "ramia-v1.0.0";
+const STATIC_CACHE = `static-${CACHE_VERSION}`;
+const STATIC_ASSETS = [
+  "/",
+  "/index.html",
+  "/success.html",
+  "/cancel.html",
+  "/app.js",
+  "/manifest.webmanifest"
+];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE);
-    await cache.addAll(ASSETS);
-    self.skipWaiting(); // importante: activa el nuevo SW ya
-  })());
+  event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)));
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.map(k => (k !== CACHE ? caches.delete(k) : null)));
-    self.clients.claim();
+    await Promise.all(keys.filter((k) => k !== STATIC_CACHE).map((k) => caches.delete(k)));
+    await self.clients.claim();
   })());
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  // Network-first para HTML => se actualiza rápido cuando hay deploy nuevo
+  if (req.method !== "GET") return;
+
   if (req.mode === "navigate") {
     event.respondWith((async () => {
       try {
         const fresh = await fetch(req);
-        const cache = await caches.open(CACHE);
-        cache.put("/index.html", fresh.clone());
+        const cache = await caches.open(STATIC_CACHE);
+        cache.put(req, fresh.clone());
         return fresh;
       } catch {
-        const cache = await caches.open(CACHE);
-        return (await cache.match("/index.html")) || Response.error();
+        const cache = await caches.open(STATIC_CACHE);
+        return (await cache.match(req)) || (await cache.match("/index.html"));
       }
     })());
     return;
   }
 
-  // Cache-first para assets
   event.respondWith((async () => {
-    const cache = await caches.open(CACHE);
+    const cache = await caches.open(STATIC_CACHE);
     const hit = await cache.match(req);
     if (hit) return hit;
-    const res = await fetch(req);
-    cache.put(req, res.clone());
-    return res;
+    const fresh = await fetch(req);
+    cache.put(req, fresh.clone());
+    return fresh;
   })());
 });
