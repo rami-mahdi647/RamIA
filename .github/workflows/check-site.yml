@@ -1,0 +1,13 @@
+name: check-site-index
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure site/index.html exists
+        run: test -f site/index.html

@@ -1,3 +1,4 @@
+ codex/create-pwa-website-with-stripe-integration
 const CACHE_NAME = 'ramia-cache-v3';
 const ASSET_CACHE = 'ramia-assets-v3';
 const STATIC_ASSETS = [
@@ -7,6 +8,18 @@ const STATIC_ASSETS = [
   '/security.html',
   '/app.js',
   '/manifest.webmanifest'
+
+const CACHE_VERSION = "ramia-v1.1.0";
+const STATIC_CACHE = `static-${CACHE_VERSION}`;
+const STATIC_ASSETS = [
+  "/",
+  "/index.html",
+  "/rent.html",
+  "/success.html",
+  "/cancel.html",
+  "/app.js",
+  "/manifest.webmanifest"
+ main
 ];
 
 self.addEventListener('install', (event) => {

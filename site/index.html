@@ -37,7 +37,13 @@
       <p>RamIA combines local node execution, AI-based anti-spam guardianship, and auditable bot leasing economics. Teams keep operational sovereignty while scaling automation for community support, moderation, and workflow orchestration.</p>
       <div class="cta">
         <a class="btn primary" href="https://github.com/RamIA/RamIA/releases/latest" target="_blank" rel="noopener">Download Software v1</a>
+ codex/create-pwa-website-with-stripe-integration
         <a class="btn stripe" href="https://buy.stripe.com/dRm3cxaligqC6Kf99tdAk04" target="_blank" rel="noopener">Rent Bots — Pay with Stripe</a>
+
+        <a class="btn" href="/rent.html">Rent Bots</a>
+        <a class="btn" href="/success.html">Payment Success Portal</a>
+        <a class="btn" href="/cancel.html">Checkout Cancel</a>
+ main
       </div>
     </section>
 
@@ -50,10 +56,20 @@
       <article class="card"><h2>FAQ</h2><h3>Is this a hosted node?</h3><p>No. This website is informational; node runs locally.</p><h3>Do you store payment secrets here?</h3><p>No. Stripe Payment Link checkout happens on Stripe domains, with no secret keys in this static site.</p></article>
     </section>
 
+ codex/create-pwa-website-with-stripe-integration
     <section class="card" style="margin-top:16px">
       <h2>Smart Contract Security</h2>
       <p>Security posture matters for AI + blockchain workflows. Review our checklist-style guidance covering reentrancy defenses, permission boundaries, and oracle assumptions.</p>
       <a class="btn" href="/security.html">Open Security Checklist</a>
+
+    <section class="card" style="margin-top:16px;">
+      <h2>Architecture</h2>
+<pre>Rent page --(POST renter,bots_count)--> Netlify Function: create_checkout_session
+        <-- hosted Stripe URL --
+Stripe --(webhook)--> Netlify Function: stripe_webhook --> grant token store
+Browser success page --(session_id)--> Netlify Function: get_grant_token
+User copies grant token --> local RamIA endpoint /api/redeem_grant --> credits added</pre>
+ main
     </section>
 
     <footer>RamIA website is informational; node runs locally. PWA caching uses network-first HTML updates to reduce stale content after deployments.</footer>
