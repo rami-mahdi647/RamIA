@@ -9,8 +9,14 @@
   "description": "RamIA informational PWA for local-first AI bot operations and bot leasing.",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='42' fill='%230B1020'/%3E%3Cpath d='M56 196V60h66c30 0 50 14 50 41 0 17-8 29-23 35l32 60h-31l-27-52H87v52H56zm31-78h31c14 0 23-7 23-19 0-12-8-18-23-18H87v37z' fill='%2331D2FF'/%3E%3C/svg%3E",
+      "src": "/icons/icon-192.svg",
       "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
     }
