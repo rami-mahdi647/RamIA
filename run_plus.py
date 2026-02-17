@@ -1,19 +1,20 @@
-cat > run_plus.py << 'PY'
+#!/usr/bin/env python3
+"""Convenience runner for aicore_plus web mode."""
+
 import argparse
+
 import aicore_plus
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("--guardian-model", required=True)
-    p.add_argument("--fleet-size", type=int, default=800)
-    p.add_argument("--committee-size", type=int, default=9)
-    p.add_argument("--port", type=int, default=8787)
-    args = p.parse_args()
 
-    # Reuse aicore_plus main by emulating its args:
-    # easiest: call its run_web_plus directly
-    import argparse as ap
-    core_args = ap.Namespace(
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--guardian-model", required=True)
+    parser.add_argument("--fleet-size", type=int, default=800)
+    parser.add_argument("--committee-size", type=int, default=9)
+    parser.add_argument("--port", type=int, default=8787)
+    args = parser.parse_args()
+
+    core_args = argparse.Namespace(
         datadir="./aichain_data",
         guardian_model=args.guardian_model,
         threshold=0.7,
@@ -33,6 +34,6 @@ def main():
     ui_html = aicore_plus.load_ui_html("./ui_plus.html")
     aicore_plus.run_web_plus(ctxp, ui_html, "127.0.0.1", args.port)
 
+
 if __name__ == "__main__":
     main()
-PY

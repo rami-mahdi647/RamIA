@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+ codex/clean-up-code-and-remove-duplicates
+"""RamIA secure production entrypoint with replay-safe Stripe grant redemption."""
+
+import argparse
+import os
+import socketserver
+import sys
+
+import aicore_plus
+import stripe_bridge
+=======
 """RamIA secure entrypoint with signed transaction enforcement."""
 
 from __future__ import annotations
@@ -15,6 +26,7 @@ from typing import Any, Dict, Tuple
 import aichain
 import aicore_plus
 import crypto_backend
+ main
 
 
 def parse_conf(path: str):
@@ -50,6 +62,22 @@ def as_bool(cfg, k, default):
     v = str(cfg.get(k, "1" if default else "0")).lower()
     return v in ("1", "true", "yes", "on")
 
+
+ codex/clean-up-code-and-remove-duplicates
+class ExtendedHandler(aicore_plus.LocalHandlerPlus):
+    def route(self, path, data):
+        if path == "/api/redeem_grant":
+            renter = str(data.get("renter", "")).strip()
+            token = str(data.get("token", "")).strip()
+            if not renter or not token:
+                return {"ok": False, "error": "missing_renter_or_token"}
+            _, out = stripe_bridge.redeem_grant_token(self.ctxp, token, expected_renter=renter)
+            return out
+
+        if path == "/api/redeem_grant_token":
+            token = str(data.get("grant_token", "")).strip()
+            _, out = stripe_bridge.redeem_grant_token(self.ctxp, token)
+            return out
 
 def canonical_signing_payload(tx: aichain.Transaction) -> bytes:
     payload = {
@@ -137,9 +165,21 @@ class SecureHandler(aicore_plus.LocalHandlerPlus):
             if ok:
                 return {"ok": True, "txid": out, "signed": True, "from_addr": wallet.get("address", "")}
             return {"ok": False, "error": out}
+ main
 
         return super().route(path, data)
 
+
+ codex/clean-up-code-and-remove-duplicates
+def run_web_with_stripe(ctxp: aicore_plus.AppContextPlus, ui_html: str, host: str, port: int):
+    class ThreadingHTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+        allow_reuse_address = True
+
+    ExtendedHandler.ctxp = ctxp
+    ExtendedHandler.ui_html = ui_html
+    httpd = ThreadingHTTPServer((host, port), ExtendedHandler)
+    print(f"[ramia-core-secure] web=http://{host}:{port}")
+    print("[ramia-core-secure] endpoints: POST /api/redeem_grant, /api/redeem_grant_token")
 
 def run_secure_web(ctxp: aicore_plus.AppContextPlus, ui_html: str, host: str, port: int):
     class ThreadingHTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
@@ -150,6 +190,7 @@ def run_secure_web(ctxp: aicore_plus.AppContextPlus, ui_html: str, host: str, po
     httpd = ThreadingHTTPServer((host, port), SecureHandler)
     print(f"[ramia-secure] web=http://{host}:{port}")
     print("[ramia-secure] secure mode: signatures required for mempool admission")
+ main
     httpd.serve_forever()
 
 
@@ -213,7 +254,11 @@ def main():
         print("[node] web disabled by config.")
         sys.exit(0)
 
+ codex/clean-up-code-and-remove-duplicates
+    run_web_with_stripe(ctxp, html, web_host, web_port)
+
     run_secure_web(ctxp, html, web_host, web_port)
+ main
 
 
 if __name__ == "__main__":

@@ -31,7 +31,6 @@ Set in Netlify site settings (Build & deploy → Environment):
 1. Set all env vars to test keys/secrets.
 2. Trigger checkout via your app (or `/.netlify/functions/create_checkout_session` POST).
 3. Complete payment with Stripe test card.
- codex/consolidate-api-contract-across-documentation
 4. Open `/success.html?session_id=<id>` and load the grant token.
 5. Redeem token on local RamIA node endpoint `POST /api/redeem_grant` using JSON body `{"renter":"alice","token":"<grant_token>"}`.
 
@@ -48,4 +47,3 @@ Use a single redemption contract across docs/UI/backend:
 5. Call `/.netlify/functions/get_grant_token?session_id=<id>&grant_key=<temp_key>`.
 6. Endpoint returns only `{ "grant_token": "..." }` and invalidates the grant after the first successful read by default.
 7. Redeem token on local RamIA node endpoint `/api/redeem_grant_token`.
- main
