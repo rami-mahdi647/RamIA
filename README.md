@@ -98,7 +98,7 @@ pkg install -y git python
 Clone:
 
 ```bash
-git clone <YOUR_REPO_URL>
+git clone <[>](https://github.com/rami-mahdi647/RamIA)
 cd RamIA
 ```
 
