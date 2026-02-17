@@ -1,16 +1,13 @@
 [build]
   publish = "site"
-  functions = "netlify/functions"
-
-[functions]
-  node_bundler = "esbuild"
+  command = ""
 
 [[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
+  from = "/rent"
+  to = "/rent.html"
   status = 200
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/security"
+  to = "/security.html"
   status = 200

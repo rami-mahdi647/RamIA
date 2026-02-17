@@ -3,6 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+ codex/create-pwa-website-with-stripe-integration
+  <title>Rent Bots | RamIA</title>
+  <meta name="description" content="Rent RamIA bot capacity through Stripe Payment Link checkout." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0B1020" />
+  <style>
+    body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#070b16;color:#e8efff}
+    .wrap{max-width:900px;margin:0 auto;padding:24px}
+    .card{background:#121b34;border:1px solid #243863;border-radius:16px;padding:24px}
+    p,li{color:#9eb2d8;line-height:1.6}.btn{display:inline-block;margin-right:10px;margin-top:10px;padding:11px 16px;border-radius:10px;text-decoration:none;border:1px solid #3d5ea9;color:#fff}
+    .stripe{background:#16b67f;border-color:#36e9ac;color:#04120d;font-weight:700}
+    #updateBanner{position:fixed;right:14px;bottom:14px;background:#102a4a;border:1px solid #31d2ff;border-radius:12px;padding:12px;display:none}
+
   <title>Rent Bots - RamIA</title>
   <style>
     body { font-family: system-ui, sans-serif; margin: 0; background: #0b1020; color: #e9efff; }
@@ -13,10 +26,28 @@
     .btn { margin-top: 16px; padding: 10px 14px; border: 0; border-radius: 8px; background: #1177aa; color: #fff; cursor: pointer; }
     .muted { color: #9db2df; }
     code { background: #091027; padding: 2px 4px; border-radius: 4px; }
+ main
   </style>
 </head>
 <body>
   <main class="wrap">
+ codex/create-pwa-website-with-stripe-integration
+    <section class="card">
+      <h1>Rent Bots</h1>
+      <p>Scale your operations instantly with RamIA bot leasing. Stripe handles checkout securely on hosted payment pages while your operational node remains under your local control.</p>
+      <ul>
+        <li>Fast onboarding for campaign, moderation, and workflow bots.</li>
+        <li>No card data processing in this website.</li>
+        <li>Payment completed on Stripe-hosted infrastructure.</li>
+      </ul>
+      <a class="btn stripe" href="https://buy.stripe.com/dRm3cxaligqC6Kf99tdAk04" target="_blank" rel="noopener">Rent Bots — Pay with Stripe</a>
+      <a class="btn" href="/index.html">Back to Home</a>
+      <p><small>This website is informational; node runs locally.</small></p>
+    </section>
+  </main>
+  <aside id="updateBanner"><strong>Update available.</strong><button id="updateBtn" class="btn">Reload</button></aside>
+  <script src="/app.js"></script>
+
     <h1>Rent Bots</h1>
     <p class="muted">Fixed price: <strong>$1,000 USD per bot</strong>. Payment handled only by Stripe hosted Checkout.</p>
     <section class="card">
@@ -62,5 +93,6 @@
       location.href = data.checkout_url;
     };
   </script>
+ main
 </body>
 </html>
