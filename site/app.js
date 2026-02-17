@@ -1,33 +1,36 @@
-(async () => {
-  const btn = document.getElementById("updateBtn");
+(() => {
+  const updateBanner = document.getElementById("updateBanner");
+  const updateBtn = document.getElementById("updateBtn");
 
-  if ("serviceWorker" in navigator) {
-    const reg = await navigator.serviceWorker.register("/sw.js");
+  function showUpdate() {
+    if (updateBanner) updateBanner.style.display = "block";
+  }
 
-    // Si hay update esperando, avisa
-    if (reg.waiting) {
-      btn.style.display = "inline-block";
-    }
+  if (!("serviceWorker" in navigator)) return;
+
+  navigator.serviceWorker.register("/sw.js").then((reg) => {
+    if (reg.waiting) showUpdate();
 
     reg.addEventListener("updatefound", () => {
-      const sw = reg.installing;
-      if (!sw) return;
-      sw.addEventListener("statechange", () => {
-        if (sw.state === "installed" && navigator.serviceWorker.controller) {
-          btn.style.display = "inline-block";
+      const worker = reg.installing;
+      if (!worker) return;
+      worker.addEventListener("statechange", () => {
+        if (worker.state === "installed" && navigator.serviceWorker.controller) {
+          showUpdate();
         }
       });
     });
 
-    btn.addEventListener("click", async () => {
-      if (reg.waiting) {
-        reg.waiting.postMessage({ type: "SKIP_WAITING" });
-      }
-      location.reload();
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      window.location.reload();
     });
 
-    navigator.serviceWorker.addEventListener("message", (event) => {
-      if (event.data?.type === "RELOAD") location.reload();
-    });
-  }
+    if (updateBtn) {
+      updateBtn.addEventListener("click", () => {
+        if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+      });
+    }
+
+    setInterval(() => reg.update().catch(() => {}), 60 * 1000);
+  }).catch(() => {});
 })();
