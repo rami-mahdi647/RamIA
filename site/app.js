@@ -1,36 +1,39 @@
 (() => {
-  const updateBanner = document.getElementById("updateBanner");
-  const updateBtn = document.getElementById("updateBtn");
+  const banner = document.getElementById('updateBanner');
+  const button = document.getElementById('updateBtn');
+  if (!('serviceWorker' in navigator)) return;
 
-  function showUpdate() {
-    if (updateBanner) updateBanner.style.display = "block";
-  }
+  const showBanner = () => {
+    if (banner) banner.style.display = 'block';
+  };
 
-  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.register('/sw.js').then((registration) => {
+    if (registration.waiting) showBanner();
 
-  navigator.serviceWorker.register("/sw.js").then((reg) => {
-    if (reg.waiting) showUpdate();
-
-    reg.addEventListener("updatefound", () => {
-      const worker = reg.installing;
-      if (!worker) return;
-      worker.addEventListener("statechange", () => {
-        if (worker.state === "installed" && navigator.serviceWorker.controller) {
-          showUpdate();
+    registration.addEventListener('updatefound', () => {
+      const newWorker = registration.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          showBanner();
         }
       });
     });
 
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      window.location.reload();
-    });
-
-    if (updateBtn) {
-      updateBtn.addEventListener("click", () => {
-        if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+    if (button) {
+      button.addEventListener('click', () => {
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        } else {
+          window.location.reload();
+        }
       });
     }
 
-    setInterval(() => reg.update().catch(() => {}), 60 * 1000);
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+
+    setInterval(() => registration.update().catch(() => {}), 60000);
   }).catch(() => {});
 })();
