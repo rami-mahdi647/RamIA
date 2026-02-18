@@ -1,4 +1,15 @@
+# Python
+__pycache__/
+*.pyc
 
-# secrets
-wallet*.json
-*.key
+# Local data / chain state
+aichain_data/
+*.bak
+
+# Logs
+logs/*.log
+
+# Binaries / downloads
+ngrok
+*.tgz
+*.zip

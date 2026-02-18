@@ -1,0 +1,47 @@
+{
+  "node": {
+    "name": "ramia-termux-node",
+    "datadir": "./aichain_data",
+    "network": "local-dev",
+    "fee_unit": 0.01
+  },
+  "ai_guardian": {
+    "mode": "warn",
+    "threshold": 0.75,
+    "fee_multiplier": 2.0,
+    "reason_codes": true
+  },
+  "rewards": {
+    "enabled": true,
+    "rule": "deterministic",
+    "base_reward": 1.0,
+    "risk_penalty": 0.5
+  },
+  "security": {
+    "require_local_only": true,
+    "allow_unsigned_dev_tx": true
+  },
+  "tokenomics": {
+    "max_supply": 100000000.0,
+    "genesis_supply": 0.0,
+    "base_block_reward": 1.0,
+    "max_reward_per_event": 25.0,
+    "min_reward_per_event": 0.0,
+    "difficulty_weight": 0.25,
+    "latency_weight": 0.15,
+    "latency_target_ms": 250.0,
+    "nodes_weight": 0.2,
+    "nodes_target": 5,
+    "risk_penalty": 0.5,
+    "difficulty_factor_min": 0.75,
+    "difficulty_factor_max": 2.5,
+    "latency_factor_min": 0.5,
+    "latency_factor_max": 1.5,
+    "nodes_factor_min": 0.75,
+    "nodes_factor_max": 1.75
+  },
+  "network_metrics": {
+    "active_nodes_estimate": 1,
+    "difficulty_estimate": 1.0
+  }
+}
