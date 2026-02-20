@@ -33,6 +33,17 @@ It wraps a minimal chain engine (`aichain.py`) with an **AI Guardian** safety la
 
 ---
 
+
+## Plan de versión v1.2
+
+Para consolidar estabilidad, seguridad y pruebas antes de un lanzamiento más amplio, consulta el plan de release:
+
+- **`docs/V1_2_RELEASE_PLAN.md`**
+
+Este plan resume: estabilización de código, estrategia de pruebas, hardening de claves/transacciones, mejora de IA adaptativa y salida por testnet.
+
+---
+
 ## Requirements
 
 ### Termux (Android)
