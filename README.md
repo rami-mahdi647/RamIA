@@ -1,328 +1,404 @@
-# RamIA — Terminal-First Blockchain Node (AI-Guarded) + Auditable Rewards (Medium-Security)
+# RamIA
 
-RamIA is a developer-first blockchain prototype built to run entirely from the terminal (Termux/Linux/macOS).  
-It wraps a minimal chain engine (`aichain.py`) with an **AI Guardian** safety layer and an **append-only, hash-chained rewards ledger** designed for **medium-security auditing**.
+Terminal-first blockchain + AI-guarded transaction workflows, with auditable reward logs and optional secure wallet/Stripe integrations.
 
-> Goal: Make it easy for early adopters (developers) to run a node, mine, send transactions, and audit reward issuance—without hosting, dashboards, or hidden complexity.
-
----
-
-## Repository Layout (Key Files)
-
-- **`aichain.py`**  
-  Core chain engine (block/tx/state). Kept as close to “core” as possible for auditability.
-
-- **`ramia_node.py`**  
-  Terminal node wrapper. Provides a clean CLI (`init`, `mine`, `send`, `chain`, etc.) and integrates the AI Guardian.  
-  Includes a convenience conversion layer for fees (float input → integer units) to match `aichain.py` expectations.
-
-- **`ramia_ai_guardian.py`**  
-  Deterministic decision engine for risk scoring and policy actions (e.g., allow/warn/reject, fee scaling).
-
-- **`ramia_rewards_ledger.py`**  
-  Append-only rewards ledger (`.jsonl`) with **hash chaining** (`prev_hash` → `entry_hash`) to make edits tamper-evident.
-
-- **`ramia_reward_policy.py`**  
-  Deterministic reward function (tokenomics) driven by config. Bounded outputs (caps/floors) and explicit factors.
-
-- **`ramia_config.json`**  
-  Single source of truth for runtime config, tokenomics, and network metrics (until P2P discovery exists).
-
-- **`run_node.sh` / `run_tmux.sh`**  
-  Terminal-first “ops” scripts: persistent execution via `tmux`, restart loops, and file-based logs.
+This repository is designed to be usable by people who work directly in a terminal (Linux, Kali Linux, Termux, macOS, WSL). It includes a lightweight chain core, wrappers for safer UX, and optional modules for stronger wallet security and payment bridging.
 
 ---
 
+## 1) What RamIA is
 
-## Plan de versión v1.2
+RamIA is a local-first prototype stack centered on:
 
-Para consolidar estabilidad, seguridad y pruebas antes de un lanzamiento más amplio, consulta el plan de release:
+- **`aichain.py`**: minimal blockchain engine (state, mempool, PoW mining, balances, chain inspection).
+- **`ramia_node.py`**: operator CLI wrapper that adds deterministic AI risk checks and reward logging on top of `aichain.py`.
+- **`ramia_ai_guardian.py`**: deterministic risk scoring + policy decision (`allow`, `warn`, `fee_multiplier`, `reject`).
+- **`ramia_reward_policy.py`** + **`ramia_rewards_ledger.py`**: deterministic reward calculation and append-only hash-chained reward events.
+- **Secure/advanced modules** like `wallet_secure.py`, `ramia_core_secure.py`, and `stripe_webhook.py` for wallet hardening and payment-based grant flows.
 
-- **`docs/V1_2_RELEASE_PLAN.md`**
-
-Este plan resume: estabilización de código, estrategia de pruebas, hardening de claves/transacciones, mejora de IA adaptativa y salida por testnet.
+> Status: this is a prototype/developer-oriented system, not a production blockchain.
 
 ---
 
-## Requirements
+## 2) How it works (high level)
 
-### Termux (Android)
+1. You initialize chain state (`aichain_data/`) with `aichain.py init` or `ramia_node.py init`.
+2. You mine blocks (`mine`) to advance chain height and create miner rewards.
+3. You send transactions (`send`) from one address string to another.
+4. If you use `ramia_node.py send`, the **AI Guardian** scores the transaction first.
+5. When mining via `ramia_node.py mine`, a deterministic reward event is appended to:
+   - `aichain_data/rewards_ledger.jsonl`
+6. Reward ledger integrity is auditable through hash chaining (`prev_hash` → `entry_hash`).
+
+---
+
+## 3) Repository structure (practical map)
+
+### Core runtime
+
+- `aichain.py` → canonical chain CLI and state machine.
+- `ramia_node.py` → terminal wrapper around `aichain.py`.
+- `ramia_config.json` → runtime config for node, guardian policy, rewards/tokenomics.
+- `run_node.sh` → continuous mine loop + log management.
+- `run_tmux.sh` → starts persistent mining in a tmux session.
+
+### AI/policy/rewards
+
+- `ramia_ai_guardian.py` → deterministic tx risk model.
+- `ramia_reward_policy.py` → bounded deterministic reward function.
+- `ramia_rewards_ledger.py` → append/verify reward ledger records.
+- `ramia_autopolicy.py`, `ramia_policy_service.py` → policy-oriented extensions.
+
+### Security and wallet
+
+- `wallet_secure.py`, `ramia_wallet_secure.py` → encrypted wallet file workflows.
+- `crypto_backend.py`, `crypto_selftest.py`, `tx_privacy.py` → crypto primitives and checks.
+- `ramia_core_secure.py`, `ramia_core.py` → secure runtime entrypoint.
+- `SECURITY.md`, `docs/CRYPTO_SPEC.md`, `docs/THREAT_MODEL.md` → security model/docs.
+
+### Payment bridge (optional)
+
+- `stripe_webhook.py`, `stripe_bridge.py`, `STRIPE_SETUP.md`.
+
+### Documentation and tests
+
+- `INSTALL.md`, `docs/*.md` for product and architecture notes.
+- `tests/` with selected unit/integration checks.
+
+### Vendored subproject
+
+- `vendor/quantumcore/` contains a larger web/desktop/smart-contract stack with its own tooling and docs.
+
+---
+
+## 4) Prerequisites (terminal users)
+
+Minimum for core CLI usage:
+
+- **Git**
+- **Python 3.10+** (3.11/3.12 recommended)
+- **tmux** (optional but recommended for persistent node sessions)
+
+### Optional Python packages (only for advanced features)
+
+Core chain + basic RamIA wrapper mainly uses standard library. Install these only if you use related modules:
+
+- `cryptography` (secure wallet AEAD/Ed25519 paths)
+- `argon2-cffi` (stronger KDF path in wallet creation)
+- `flask` + `stripe` (Stripe webhook service)
+
+If you want all optional features available:
+
 ```bash
-pkg update -y
-pkg install -y python git tmux
-
-Linux (Debian/Ubuntu)
-
-sudo apt-get update
-sudo apt-get install -y python3 git tmux
-
-> Python 3.10+ recommended (Termux may ship newer).
-
-
-
+python3 -m pip install --upgrade pip
+python3 -m pip install cryptography argon2-cffi flask stripe
+```
 
 ---
 
-Quickstart
+## 5) OS-specific installation
 
-1) Clone
+## Kali Linux (recommended path for your request)
 
-git clone git@github.com:rami-mahdi647/RamIA.git
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-pip tmux
+python3 -m pip install --upgrade pip
+```
+
+Then clone and run Quickstart below.
+
+## Debian / Ubuntu
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-pip tmux
+python3 -m pip install --upgrade pip
+```
+
+## Fedora
+
+```bash
+sudo dnf install -y git python3 python3-pip tmux
+python3 -m pip install --upgrade pip
+```
+
+## Arch Linux
+
+```bash
+sudo pacman -Sy --needed git python python-pip tmux
+python -m pip install --upgrade pip
+```
+
+## macOS (Homebrew)
+
+```bash
+brew install git python tmux
+python3 -m pip install --upgrade pip
+```
+
+## Termux (Android)
+
+Use the included script:
+
+```bash
+pkg update -y && pkg upgrade -y
+pkg install -y git
+
+git clone <YOUR_REPO_URL>
 cd RamIA
+bash scripts/termux_install.sh
+```
 
-2) Initialize chain data
+Or manually:
 
+```bash
+pkg update -y && pkg upgrade -y
+pkg install -y python git tmux
+python -m pip install --upgrade pip
+```
+
+## Windows users (terminal/professional workflow)
+
+Use **WSL2** with Ubuntu/Kali and follow Linux steps above.
+
+---
+
+## 6) Clone the repository
+
+Replace with your actual repository URL:
+
+```bash
+git clone <YOUR_REPO_URL>
+cd RamIA
+```
+
+If you use SSH:
+
+```bash
+git clone git@github.com:<your-org-or-user>/RamIA.git
+cd RamIA
+```
+
+---
+
+## 7) Quickstart (core terminal workflow)
+
+### A) Initialize local chain data
+
+```bash
 python3 ramia_node.py init
+```
 
-3) Start persistent mining (survives disconnect)
+### B) Mine one block
 
+```bash
+python3 ramia_node.py mine miner_1
+```
+
+### C) Show recent chain
+
+```bash
+python3 ramia_node.py chain --n 10
+```
+
+### D) Send a transaction (AI-guarded path)
+
+```bash
+python3 ramia_node.py send alice bob 10 --fee 0.01 --memo "hello"
+```
+
+### E) Check balance directly in chain core
+
+```bash
+python3 aichain.py balance bob
+# or explicitly
+python3 aichain.py --datadir ./aichain_data balance bob
+```
+
+---
+
+## 8) CLI command reference
+
+## `aichain.py` (core)
+
+```bash
+python3 aichain.py --datadir ./aichain_data init
+python3 aichain.py --datadir ./aichain_data balance <ADDR>
+python3 aichain.py --datadir ./aichain_data send <FROM> <TO> <AMOUNT_INT> --fee <FEE_INT> --memo "..."
+python3 aichain.py --datadir ./aichain_data mine <MINER_ADDR>
+python3 aichain.py --datadir ./aichain_data chain --n 20
+```
+
+Important: in `aichain.py`, `amount` and `fee` are integer units.
+
+## `ramia_node.py` (wrapper)
+
+```bash
+python3 ramia_node.py init
+python3 ramia_node.py mine <MINER>
+python3 ramia_node.py chain --n 10
+python3 ramia_node.py send <SENDER> <TO> <AMOUNT> --fee <FLOAT_OR_INT> --memo "..."
+python3 ramia_node.py score '{"from":"a","to":"b","amount":1}'
+python3 ramia_node.py reward 1.0 '{"from":"a","to":"b","amount":1}'
+```
+
+Wrapper fee normalization uses:
+
+- `ramia_config.json` → `node.fee_unit`
+
+---
+
+## 9) Persistent operation in terminal (tmux)
+
+Start loop (includes init + mine + reward ledger verify):
+
+```bash
 ./run_tmux.sh miner_1
+```
 
 Attach:
 
+```bash
 tmux attach -t ramia
+```
 
-Detach (keep running):
+Detach without stopping:
 
-Ctrl+B, then D
+- `Ctrl+B`, then `D`
 
+Stop session:
 
-Stop:
-
+```bash
 tmux kill-session -t ramia
-
-
----
-
-CLI Usage (ramia_node.py)
-
-Show help:
-
-python3 ramia_node.py -h
-
-Mine
-
-python3 ramia_node.py mine miner_1
-
-View chain (last N blocks)
-
-python3 ramia_node.py chain --n 10
-
-Send a transaction (AI-guarded)
-
-python3 ramia_node.py send alice bob 10 --fee 0.01 --memo "hello"
-
-Fee model note
-
-aichain.py expects --fee as an integer.
-ramia_node.py accepts float-style fees (e.g. 0.01) and converts them into integer units using:
-
-ramia_config.json → node.fee_unit
-
-
-Example:
-
-fee_unit = 0.01
-
---fee 0.01 → fee_int = 1
-
---fee 0.10 → fee_int = 10
-
-
+```
 
 ---
 
-Balances (core chain)
+## 10) Logs and data locations
 
-python3 aichain.py balance <ADDRESS>
+Default paths:
 
-If you use an explicit data directory:
+- Chain data: `./aichain_data/`
+- Logs: `./logs/`
 
-python3 aichain.py --datadir ./aichain_data balance <ADDRESS>
+Common logs produced by run scripts:
 
-> Important: Your private key does not store tokens. Tokens live in chain state; the private key only authorizes spending.
+- `logs/supervisor.log`
+- `logs/init.log`
+- `logs/mine.log`
+- `logs/ledger_verify.log`
 
+Tail mining logs:
 
-
-
----
-
-Logs
-
-If you use run_node.sh / run_tmux.sh, logs are written under ./logs/.
-
-Common:
-
-logs/supervisor.log
-
-logs/mine.log
-
-logs/init.log
-
-logs/ledger_verify.log
-
-
-Tail mining output:
-
+```bash
 tail -f logs/mine.log
-
+```
 
 ---
 
-Auditable Rewards (Medium Security)
+## 11) Rewards and audit trail
 
-Rewards are recorded in:
+Reward ledger file:
 
-aichain_data/rewards_ledger.jsonl
+- `aichain_data/rewards_ledger.jsonl`
 
+Integrity fields include:
 
-Each record includes:
+- `prev_hash`
+- `entry_hash`
 
-prev_hash and entry_hash → tamper-evident chaining
+Verify reward ledger integrity:
 
-an event with a reward breakdown for audit
-
-
-Verify ledger integrity:
-
+```bash
 python3 ramia_rewards_ledger.py
+```
 
-Reward policy inputs (v0)
+Reward policy sources:
 
-The policy is deterministic and config-driven. It currently supports factors like:
-
-difficulty (via config estimate until P2P sync exists)
-
-latency (placeholder until network instrumentation exists)
-
-active nodes (explicit estimate until peer discovery exists)
-
-AI risk score
-
-work units
-
-
-Configuration:
-
-ramia_config.json → tokenomics, network_metrics
-
-
-Policy code:
-
-ramia_reward_policy.py
-
-
-> Current design keeps reward logic out of the chain core to keep iteration fast and audits simple.
-You can later migrate rewards into on-chain minting once consensus rules stabilize.
-
-
-
+- `ramia_reward_policy.py`
+- `ramia_config.json` (`tokenomics`, `network_metrics`)
 
 ---
 
-Tokenomics (v0)
+## 12) Security-focused usage
 
-Target max supply: 100,000,000
+For hardened wallet/runtime flows, review and use:
 
-Deterministic reward outputs
+- `wallet_secure.py`
+- `ramia_core_secure.py`
+- `SECURITY.md`
+- `docs/CRYPTO_SPEC.md`
 
-Hard caps per event to prevent runaway issuance
+Example wallet utility commands:
 
-Explicit config parameters for transparency
-
-
-Key config fields:
-
-tokenomics.max_supply
-
-tokenomics.base_block_reward
-
-tokenomics.max_reward_per_event
-
-tokenomics.risk_penalty
-
-network_metrics.active_nodes_estimate
-
-network_metrics.difficulty_estimate
-
-
+```bash
+python3 wallet_secure.py create --out wallet.secure.json --label operator
+python3 wallet_secure.py info --wallet wallet.secure.json
+python3 wallet_secure.py export-pub --wallet wallet.secure.json
+```
 
 ---
 
-Mining Time (Expected)
+## 13) Optional Stripe integration
 
-Mining time depends heavily on:
+If you need payment/grant flows:
 
-PoW difficulty in aichain.py
+1. Read `STRIPE_SETUP.md`.
+2. Install optional deps (`flask`, `stripe`).
+3. Configure required Stripe environment variables.
 
-your device’s compute power
+Main bridge files:
 
-
-For developer experience:
-
-Devnet target: ~10–30s per block
-
-Small network target: ~30–120s per block
-
-
-If blocks take many minutes/hours on mobile, lower difficulty or add difficulty retargeting.
-
+- `stripe_webhook.py`
+- `stripe_bridge.py`
 
 ---
 
-Security Notes (Medium-Security Baseline)
+## 14) Health checks and tests
 
-Reward ledger is tamper-evident via hash chaining (auditable offline).
+Self-test examples from this repo:
 
-Reward policy is deterministic and bounded.
+```bash
+python3 tokenomics_v1.py --self-test
+python3 crypto_selftest.py
+```
 
-Runtime artifacts (logs, chain data) should not be committed to Git.
+Pytest suite (if you have pytest installed):
 
-
-Recommended .gitignore:
-
-aichain_data/
-
-logs/*.log
-
-__pycache__/
-
-
+```bash
+python3 -m pytest -q
+```
 
 ---
 
-Roadmap / Next Steps
+## 15) Professional terminal workflow recommendations
 
-1. Read difficulty from chain state automatically (remove config estimates)
-
-
-2. P2P peer discovery + block sync
-
-
-3. Optional: sign ledger entries per node (Ed25519)
-
-
-4. Optional: migrate reward issuance to on-chain rules once stable
-
-
-
+- Use a dedicated Python virtual environment per deployment.
+- Keep `ramia_config.json` versioned and reviewed.
+- Run node in `tmux`/`screen` (or a systemd service in Linux servers).
+- Back up `aichain_data/` and secure wallet files regularly.
+- Do not commit secrets, wallet files, or Stripe secrets.
+- For Kali/Linux operator environments, prefer non-root runtime and strict file permissions.
 
 ---
 
-Contributing
+## 16) Known limitations
 
-Keep changes small and easy to review.
-
-Prefer deterministic logic over dynamic heuristics.
-
-Avoid introducing heavyweight dependencies.
-
-Always update docs when adding commands or flags.
-
-
+- Prototype architecture (not production consensus/networking).
+- Mining, mempool, and policy logic are intentionally simplified.
+- Some modules are optional/experimental and require extra dependencies.
 
 ---
 
-License
+## 17) Further docs
 
-(TODO: add license)
+- `INSTALL.md`
+- `SECURITY.md`
+- `docs/FAQ.md`
+- `docs/MVP_FLOW.md`
+- `docs/PRODUCT_V1.md`
+- `docs/THREAT_MODEL.md`
+- `docs/TOKENOMICS_V1.md`
+- `docs/V1_2_RELEASE_PLAN.md`
+
